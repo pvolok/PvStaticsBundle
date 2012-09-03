@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <parameters>
+        <parameter key="pv_statics.manager.class">Pv\Bundle\StaticsBundle\StaticsManager</parameter>
+        <parameter key="pv_statics.cache.class">Pv\Bundle\StaticsBundle\Cache\FilesystemCache</parameter>
+        <parameter key="pv_statics.twig_extension.class">Pv\Bundle\StaticsBundle\Twig\StaticsExtension</parameter>
+    </parameters>
+
+    <services>
+        <service id="statics.manager" class="%pv_statics.manager.class%">
+            <argument type="service" id="service_container" />
+            <argument type="service" id="statics.cache" />
+            <argument>%kernel.root_dir%</argument>
+        </service>
+        <service id="statics.cache" class="%pv_statics.cache.class%">
+            <argument>%kernel.cache_dir%/statics</argument>
+        </service>
+
+        <service id="statics.twig_extension" class="%pv_statics.twig_extension.class%" public="false">
+            <tag name="twig.extension" />
+            <argument type="service" id="kernel" />
+        </service>
+    </services>
+</container>
