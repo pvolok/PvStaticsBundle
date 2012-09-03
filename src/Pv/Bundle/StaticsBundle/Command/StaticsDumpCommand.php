@@ -15,60 +15,42 @@ class StaticsDumpCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        /** @var $statics_manager \Pv\Bundle\StaticsBundle\StaticsManager */
         $statics_manager = $this->getContainer()->get('statics.manager');
         $s_dir = $this->getContainer()->getParameter('kernel.root_dir').'/../web/s';
 
-        $files = $this->getFilesToCompile();
+        $files = $statics_manager->getPublicFiles();
+        $names_map = array();
+
+        exec("rm -fR $s_dir");
+        mkdir($s_dir, 0755, true);
 
         foreach ($files as $file) {
-            $content = (string) $statics_manager->create($file);
+            $content = $statics_manager->getFileContent($file);
             $abs_path = $s_dir.'/'.$file;
             $dir = dirname($abs_path);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0777, true);
-            }
-            file_put_contents($abs_path, $content);
+
+            $public_name = md5($content).'.'.$this->getPublicExt($file);
+            $names_map[$file] = $public_name;
+            file_put_contents($s_dir.'/'.$public_name, $content);
+
+            $output->writeln($file.' -> '.$public_name);
         }
+
+        $names_map_file = $this->getContainer()->getParameter('kernel.root_dir').'/statics_map.php';
+        $names_map = "<?php\n\nreturn ".var_export($names_map, true).';';
+        file_put_contents($names_map_file, $names_map);
     }
 
-    protected function getFilesToCompile()
+    private function getPublicExt($path)
     {
-        $langs = $this->getContainer()->getParameter('locales');
-
-        $files = array();
-
-        foreach ($this->getContainer()->get('kernel')->getBundles() as $bundle) {
-            $public_dir = $bundle->getPath().'/Resources/statics';
-            if (!is_dir($public_dir)) {
-                continue;
-            }
-            $dir_iter = new \RecursiveDirectoryIterator($public_dir, \FilesystemIterator::SKIP_DOTS);
-            $dir_iter = new \RecursiveIteratorIterator($dir_iter);
-            $cut_len = strlen($public_dir) + 1;
-            foreach ($dir_iter as $file) {
-                $file = substr($file, $cut_len);
-                if ($this->filterFile($file)) {
-                    if (pathinfo($file, PATHINFO_EXTENSION) == 'js') {
-                        foreach ($langs as $lang) {
-                            $files[] = preg_replace('/\.js$/', "_$lang.js", $file);
-                        }
-                    } else {
-                        $files[] = $file;
-                    }
-                }
-            }
+        $ext = pathinfo($path, PATHINFO_EXTENSION);
+        switch ($ext) {
+            case 'less':
+            case 'sass':
+            case 'scss':
+                $ext = 'css';
         }
-
-        $files = array_unique($files);
-        return $files;
-    }
-
-    protected function filterFile($path)
-    {
-        if (preg_match('/(\/|^)_/', $path)) {
-            return false;
-        }
-
-        return true;
+        return $ext;
     }
 }

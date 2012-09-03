@@ -5,6 +5,7 @@ namespace Pv\Bundle\StaticsBundle;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Pv\Bundle\StaticsBundle\Cache\FilesystemCache;
 
+use Pv\Bundle\StaticsBundle\File\BaseFile;
 use Pv\Bundle\StaticsBundle\File\LessFile;
 use Pv\Bundle\StaticsBundle\File\JsFile;
 use Pv\Bundle\StaticsBundle\File\JsLocFile;
@@ -46,12 +47,20 @@ class StaticsManager
         }
     }
 
-    function getFileContent($uri, $lang, $debug=false)
+    function getFileContent($uri, $debug=false)
     {
         $params = array(
-            'lang' => $lang,
             'debug' => $debug
         );
+
+        if (pathinfo($uri, PATHINFO_EXTENSION) == 'js') {
+            if (preg_match('/\.(\w+)\.js$/', $uri, $matches)) {
+                $params['locale'] = $matches[1];
+                $uri = preg_replace('/\.(\w+)\.js$/', '.js', $uri);
+            } else {
+                throw new \Exception('js file must have locale in uri');
+            }
+        }
 
         $absPath = $this->resolvePath($uri);
         $content = $this->getCached($absPath, $params);
@@ -94,11 +103,51 @@ class StaticsManager
         } elseif ($ext == 'less') {
             $file = new LessFile($path, $container, $this, $params);
         } else {
-            throw new \Exception('Unknown file extension.');
+            $file = new BaseFile($path, $container, $this, $params);
         }
         $file->load();
 
         return $file;
+    }
+
+    function getPublicFiles()
+    {
+        $langs = $this->container->getParameter('locales');
+
+        $files = array();
+
+        foreach ($this->includePaths as $staticsDir) {
+            if (!is_dir($staticsDir)) {
+                continue;
+            }
+            $dir_iter = new \RecursiveDirectoryIterator($staticsDir, \FilesystemIterator::SKIP_DOTS);
+            $dir_iter = new \RecursiveIteratorIterator($dir_iter);
+            $cut_len = strlen($staticsDir) + 1;
+            foreach ($dir_iter as $file) {
+                $file = substr($file, $cut_len);
+                if ($this->isPublicFile($file)) {
+                    if (pathinfo($file, PATHINFO_EXTENSION) == 'js') {
+                        foreach ($langs as $lang) {
+                            $files[] = preg_replace('/\.js$/', ".$lang.js", $file);
+                        }
+                    } else {
+                        $files[] = $file;
+                    }
+                }
+            }
+        }
+
+        $files = array_unique($files);
+        return $files;
+    }
+
+    private function isPublicFile($path)
+    {
+        if (preg_match('/(\/|^)_/', $path)) {
+            return false;
+        }
+
+        return true;
     }
 
     private function resolvePath($local_path, $curDir=null)
@@ -113,35 +162,6 @@ class StaticsManager
             }
         }
         return null;
-    }
-
-    function get($path)
-    {
-        $cached = $this->getCached($path);
-        if ($cached) {
-            return $cached;
-        }
-
-        $paths = array();
-        foreach ($this->kernel->getBundles() as $bundle) {
-            $paths[] = $bundle->getPath().'/Resources/statics';
-        }
-
-        $ext = pathinfo($path, PATHINFO_EXTENSION);
-        if ($ext == 'less') {
-            $file = new LessFile($path, $paths);
-        } elseif ($ext == 'js') {
-            $file = new JsFile($path, $paths);
-            $file->setToolsDir($this->toolsDir);
-        } else {
-            return 'wrong file';
-        }
-        $file->load();
-        $file->fullCompile();
-
-        $this->cacheFile($file);
-
-        return $file->getContent();
     }
 
     protected function getCached($path, $params)
