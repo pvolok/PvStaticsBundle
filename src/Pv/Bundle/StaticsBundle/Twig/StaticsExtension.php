@@ -55,7 +55,7 @@ class StaticsExtension extends Twig_Extension
             if (!$this->namesMap) {
                 $this->namesMap = include $this->conatiner->getParameter('kernel.root_dir').'/statics_map.php';
             }
-            return '/s/'.(isset($this->namesMap[$path]) ? $this->namesMap[$path] : '/');
+            return (isset($this->namesMap[$path]) ? $this->namesMap[$path] : '/');
         }
     }
 }
