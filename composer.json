@@ -1,0 +1,6 @@
+{
+    "name": "pv/statics-bundle",
+    "autoload": {
+        "psr-0": { "": "src/" }
+    }
+}
