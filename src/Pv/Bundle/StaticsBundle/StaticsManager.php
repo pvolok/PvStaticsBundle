@@ -10,6 +10,7 @@ use Pv\Bundle\StaticsBundle\File\LessFile;
 use Pv\Bundle\StaticsBundle\File\JsFile;
 use Pv\Bundle\StaticsBundle\File\JsLocFile;
 use Pv\Bundle\StaticsBundle\File\SoyFile;
+use Pv\Bundle\StaticsBundle\File\SpriteFile;
 
 class StaticsManager
 {
@@ -39,11 +40,23 @@ class StaticsManager
         }
     }
 
-    function getUrl($local_path)
+    function getUrl($local_path, $debug=false)
     {
-        $file = $this->create($local_path);
-        if (!is_string($file)) {
-            $file->getContent();
+        if ($debug) {
+            return '/s/'.$local_path;
+        } else {
+            $ext = pathinfo($local_path, PATHINFO_EXTENSION);
+            switch ($ext) {
+                case 'less':
+                case 'sass':
+                case 'scss':
+                    $ext = 'css';
+            }
+            if (!$ext && preg_match('/^_sprites\//', $local_path)) {
+                $ext = 'png';
+            }
+            $public_name = md5($this->getFileContent($local_path)).'.'.$ext;
+            return '/s/'.$public_name;
         }
     }
 
@@ -61,6 +74,7 @@ class StaticsManager
                 throw new \Exception('js file must have locale in uri');
             }
         }
+        $uri = preg_replace('/(_sprites\/[_\-a-z]+?)\.png$/', '$1', $uri);
 
         $absPath = $this->resolvePath($uri);
         $content = $this->getCached($absPath, $params);
@@ -84,6 +98,7 @@ class StaticsManager
 
     function create($local_path, $params=array(), $parent_file=null)
     {
+        $uri = $local_path;
         $container = $this->container;
         $ext = pathinfo($local_path, PATHINFO_EXTENSION);
 
@@ -95,15 +110,17 @@ class StaticsManager
 
         $file = null;
         if ($ext == 'js') {
-            $file = new JsFile($path, $container, $this, $params);
+            $file = new JsFile($uri, $path, $container, $this, $params);
         } elseif($ext == 'jsloc') {
-            $file = new JsLocFile($path, $container, $this, $params);
+            $file = new JsLocFile($uri, $path, $container, $this, $params);
         } elseif ($ext == 'soy') {
-            $file = new SoyFile($path, $container, $this, $params);
+            $file = new SoyFile($uri, $path, $container, $this, $params);
         } elseif ($ext == 'less') {
-            $file = new LessFile($path, $container, $this, $params);
+            $file = new LessFile($uri, $path, $container, $this, $params);
+        } elseif (preg_match('/^_sprites\/\w+$/', $local_path)) {
+            $file = new SpriteFile($uri, $path, $container, $this, $params);
         } else {
-            $file = new BaseFile($path, $container, $this, $params);
+            $file = new BaseFile($uri, $path, $container, $this, $params);
         }
         $file->load();
 
@@ -135,6 +152,10 @@ class StaticsManager
                     }
                 }
             }
+            // sprites
+            foreach (glob($staticsDir.'/_sprites/*', GLOB_ONLYDIR) as $sprite) {
+                $files[] = substr($sprite, strlen($staticsDir) + 1);
+            }
         }
 
         $files = array_unique($files);
@@ -143,6 +164,9 @@ class StaticsManager
 
     private function isPublicFile($path)
     {
+        if (preg_match('/^_sprites\/[_\-a-z]+$/', $path)) {
+            return true;
+        }
         if (preg_match('/(\/|^)_/', $path)) {
             return false;
         }
@@ -157,7 +181,7 @@ class StaticsManager
         }
         foreach ($this->includePaths as $includePath) {
             $abs_path = $includePath.'/'.$local_path;
-            if (file_exists($abs_path)) {
+            if (file_exists($abs_path) || is_dir($abs_path)) {
                 return $abs_path;
             }
         }

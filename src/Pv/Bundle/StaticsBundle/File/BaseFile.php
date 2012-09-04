@@ -11,6 +11,7 @@ class BaseFile
     protected $container;
     protected $sm;
 
+    protected $uri;
     protected $path;
     protected $params;
     protected $content;
@@ -21,8 +22,9 @@ class BaseFile
 
     protected $toolsDir;
 
-    function __construct($path, ContainerInterface $container, StaticsManager $sm, $params)
+    function __construct($uri, $path, ContainerInterface $container, StaticsManager $sm, $params)
     {
+        $this->uri = $uri;
         $this->path = $path;
         $this->container = $container;
         $this->sm = $sm;

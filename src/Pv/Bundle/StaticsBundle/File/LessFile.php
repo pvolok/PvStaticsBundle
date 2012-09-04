@@ -80,8 +80,7 @@ EOF;
         unlink($input);
 
         if (0 < $code) {
-            echo $proc->getErrorOutput();exit;
-            throw FilterException::fromProcess($proc)->setInput(file_get_contents($filename));
+            throw new \Exception($proc->getErrorOutput());
         }
 
         $this->content = $proc->getOutput();
@@ -96,6 +95,12 @@ EOF;
 
         $this->subfiles[] = $inc_file;
 
-        return $inc_file->getContent();
+        if ($inc_file instanceof SpriteFile) {
+            $content = $inc_file->generateLess();
+        } else {
+            $content = $inc_file->getContent();
+        }
+
+        return $content;
     }
 }

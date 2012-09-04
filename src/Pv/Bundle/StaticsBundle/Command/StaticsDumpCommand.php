@@ -25,14 +25,15 @@ class StaticsDumpCommand extends ContainerAwareCommand
         exec("rm -fR $s_dir");
         mkdir($s_dir, 0755, true);
 
+        $webDir = dirname($s_dir);
         foreach ($files as $file) {
             $content = $statics_manager->getFileContent($file);
             $abs_path = $s_dir.'/'.$file;
             $dir = dirname($abs_path);
 
-            $public_name = md5($content).'.'.$this->getPublicExt($file);
+            $public_name = $statics_manager->getUrl($file, false);
             $names_map[$file] = $public_name;
-            file_put_contents($s_dir.'/'.$public_name, $content);
+            file_put_contents($webDir.'/'.$public_name, $content);
 
             $output->writeln($file.' -> '.$public_name);
         }
