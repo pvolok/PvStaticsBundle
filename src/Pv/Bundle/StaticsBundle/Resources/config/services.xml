@@ -5,6 +5,7 @@
     xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <parameters>
+        <parameter key="statics.debug">%kernel.debug%</parameter>
         <parameter key="pv_statics.manager.class">Pv\Bundle\StaticsBundle\StaticsManager</parameter>
         <parameter key="pv_statics.cache.class">Pv\Bundle\StaticsBundle\Cache\FilesystemCache</parameter>
         <parameter key="pv_statics.twig_extension.class">Pv\Bundle\StaticsBundle\Twig\StaticsExtension</parameter>
@@ -23,7 +24,7 @@
         <service id="statics.twig_extension" class="%pv_statics.twig_extension.class%" public="false">
             <tag name="twig.extension" />
             <argument type="service" id="service_container" />
-            <argument>%kernel.debug%</argument>
+            <argument>%statics.debug%</argument>
         </service>
     </services>
 </container>
