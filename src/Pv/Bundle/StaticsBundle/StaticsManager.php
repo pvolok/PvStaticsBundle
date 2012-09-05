@@ -7,6 +7,7 @@ use Pv\Bundle\StaticsBundle\Cache\FilesystemCache;
 
 use Pv\Bundle\StaticsBundle\File\BaseFile;
 use Pv\Bundle\StaticsBundle\File\LessFile;
+use Pv\Bundle\StaticsBundle\File\ImageFile;
 use Pv\Bundle\StaticsBundle\File\JsFile;
 use Pv\Bundle\StaticsBundle\File\JsLocFile;
 use Pv\Bundle\StaticsBundle\File\SoyFile;
@@ -119,6 +120,8 @@ class StaticsManager
             $file = new LessFile($uri, $path, $container, $this, $params);
         } elseif (preg_match('/^_sprites\/\w+$/', $local_path)) {
             $file = new SpriteFile($uri, $path, $container, $this, $params);
+        } elseif ($ext == 'png') {
+            $file = new ImageFile($uri, $path, $container, $this, $params);
         } else {
             $file = new BaseFile($uri, $path, $container, $this, $params);
         }

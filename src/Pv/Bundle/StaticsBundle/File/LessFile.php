@@ -10,6 +10,8 @@ class LessFile extends BaseFile
     {
         parent::load();
 
+        $this->content = preg_replace_callback('/data-url\((.*?)\)/',
+            array($this, 'dataUrlCallback'), $this->content);
         $this->content = preg_replace_callback('/^\@import [\'"](.*?)[\'"];/m',
             array($this, 'includeCallback'), $this->content);
 
@@ -84,6 +86,18 @@ EOF;
         }
 
         $this->content = $proc->getOutput();
+    }
+
+    protected function dataUrlCallback($matches)
+    {
+        if ($inc_file = $this->sm->create($matches[1], $this->params, $this)) {
+        } else {
+            throw new \Exception('Image ('.$matches[1].') not found for data-url.');
+        }
+
+        $this->subfiles[] = $inc_file;
+
+        return 'url('.$inc_file->getDataUrl().')';
     }
 
     protected function includeCallback($matches)
