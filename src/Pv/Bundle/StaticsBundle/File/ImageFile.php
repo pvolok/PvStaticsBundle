@@ -7,6 +7,7 @@ class ImageFile extends BaseFile
     function getDataUrl()
     {
         $image = imagecreatefromstring($this->content);
+        imagesavealpha($image, true);
 
         ob_start();
         imagepng($image);
