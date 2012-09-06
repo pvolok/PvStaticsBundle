@@ -26,5 +26,10 @@
             <argument type="service" id="service_container" />
             <argument>%statics.debug%</argument>
         </service>
+
+        <service id="statics.helper" class="Pv\Bundle\StaticsBundle\StaticsHelper">
+            <argument type="service" id="service_container" />
+            <argument>%statics.debug%</argument>
+        </service>
     </services>
 </container>
