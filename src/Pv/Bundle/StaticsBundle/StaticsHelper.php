@@ -9,6 +9,8 @@ class StaticsHelper
     private $container;
     private $debug;
 
+    private $namesMap;
+
     function __construct(ContainerInterface $container, $debug)
     {
         $this->container = $container;
@@ -23,7 +25,7 @@ class StaticsHelper
             return "/s/$path";
         } else {
             if (!$this->namesMap) {
-                $this->namesMap = include $this->conatiner->getParameter('kernel.root_dir').'/statics_map.php';
+                $this->namesMap = include $this->container->getParameter('kernel.root_dir').'/statics_map.php';
             }
             return (isset($this->namesMap[$path]) ? $this->namesMap[$path] : '/');
         }
