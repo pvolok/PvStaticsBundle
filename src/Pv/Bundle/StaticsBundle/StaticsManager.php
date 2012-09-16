@@ -203,7 +203,7 @@ class StaticsManager
 
         $compiled_date = $metadata['date'];
         foreach ($metadata['src_files'] as $src_file) {
-            if ($compiled_date < filemtime($src_file)) {
+            if (!file_exists($src_file) || $compiled_date < filemtime($src_file)) {
                 return null;
             }
         }
