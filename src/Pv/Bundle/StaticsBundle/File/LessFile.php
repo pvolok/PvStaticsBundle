@@ -12,6 +12,8 @@ class LessFile extends BaseFile
 
         $this->content = preg_replace_callback('/data-url\((.*?)\)/',
             array($this, 'dataUrlCallback'), $this->content);
+        $this->content = preg_replace_callback('/statics-url\((.*?)\)/',
+            array($this, 'staticsUrlCallback'), $this->content);
         $this->content = preg_replace_callback('/^\@import [\'"](.*?)[\'"];/m',
             array($this, 'includeCallback'), $this->content);
 
@@ -98,6 +100,19 @@ EOF;
         $this->subfiles[] = $inc_file;
 
         return 'url('.$inc_file->getDataUrl().')';
+    }
+
+    protected function staticsUrlCallback($matches)
+    {
+        $fileLocalPath = $matches[1];
+        if ($inc_file = $this->sm->create($fileLocalPath, $this->params, $this)) {
+        } else {
+            throw new \Exception('Static file ('.$matches[1].') not found for statics-url.');
+        }
+
+        $this->subfiles[] = $inc_file;
+
+        return 'url('.$this->sm->getUrl($fileLocalPath, $this->debug).')';
     }
 
     protected function includeCallback($matches)
