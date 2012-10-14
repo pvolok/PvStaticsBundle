@@ -22,7 +22,7 @@ class JsFile extends BaseFile
             return;
         }
 
-        $compiler_jar = $this->container->getParameter('kernel.root_dir').'/../../tools/closure-compiler.jar';
+        $compiler_jar = $this->container->getParameter('kernel.root_dir').'/../../tools/closure-20120917.jar';
 
         $pb = new ProcessBuilder();
         $pb->inheritEnvironmentVariables();

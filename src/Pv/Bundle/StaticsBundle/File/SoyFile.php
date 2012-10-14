@@ -10,7 +10,7 @@ class SoyFile extends BaseFile
     {
         parent::load();
 
-        $soy_jar = $this->container->getParameter('kernel.root_dir').'/../../tools/soy.jar';
+        $soy_jar = $this->container->getParameter('kernel.root_dir').'/../../tools/soy-20111222.jar';
 
         $pb = new ProcessBuilder();
         $pb->inheritEnvironmentVariables();
