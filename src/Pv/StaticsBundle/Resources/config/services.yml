@@ -31,3 +31,8 @@ services:
         public: false
         tags:
             - { name: twig.extension }
+
+    statics.loader:
+        class: Pv\StaticsBundle\Loader\Loader
+        arguments:
+            - @kernel
