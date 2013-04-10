@@ -1,17 +1,17 @@
 <?php
 
-namespace Pv\Bundle\StaticsBundle;
+namespace Pv\StaticsBundle;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Pv\Bundle\StaticsBundle\Cache\FilesystemCache;
+use Pv\StaticsBundle\Cache\FilesystemCache;
 
-use Pv\Bundle\StaticsBundle\File\BaseFile;
-use Pv\Bundle\StaticsBundle\File\LessFile;
-use Pv\Bundle\StaticsBundle\File\ImageFile;
-use Pv\Bundle\StaticsBundle\File\JsFile;
-use Pv\Bundle\StaticsBundle\File\JsLocFile;
-use Pv\Bundle\StaticsBundle\File\SoyFile;
-use Pv\Bundle\StaticsBundle\File\SpriteFile;
+use Pv\StaticsBundle\File\BaseFile;
+use Pv\StaticsBundle\File\LessFile;
+use Pv\StaticsBundle\File\ImageFile;
+use Pv\StaticsBundle\File\JsFile;
+use Pv\StaticsBundle\File\JsLocFile;
+use Pv\StaticsBundle\File\SoyFile;
+use Pv\StaticsBundle\File\SpriteFile;
 
 class StaticsManager
 {

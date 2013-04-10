@@ -1,6 +1,6 @@
 <?php
 
-namespace Pv\Bundle\StaticsBundle\File;
+namespace Pv\StaticsBundle\File;
 
 use Symfony\Component\Process\ProcessBuilder;
 

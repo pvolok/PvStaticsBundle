@@ -1,21 +1,67 @@
 <?php
 
-namespace Pv\Bundle\StaticsBundle\File;
+namespace Pv\StaticsBundle\Command;
 
-class SpriteFile extends BaseFile
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+
+class SpritesUpdateCommand  extends ContainerAwareCommand
 {
-    private $images;
-
-    function load()
+    protected function configure()
     {
+        $this
+                ->setName('sprites:update')
+                ->setDescription('Regenerate all sprites.');
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        foreach ($this->getContainer()->get('kernel')->getBundles() as $bundle) {
+            $public_dir = $bundle->getPath().'/Resources/statics';
+            $dir = $public_dir.'/_sprites';
+            if (is_dir($dir)) {
+                foreach (glob($dir.'/*', GLOB_ONLYDIR) as $sprite_dir) {
+                    $sprite_name = basename($sprite_dir);
+                    $sprites_file = new SpritesFile($sprite_dir);
+                    $sprites_file->compile();
+                    imagepng($sprites_file->drawImage(), $public_dir.'/img/sprites/'.$sprite_name.'.png');
+                    file_put_contents($public_dir.'/css/_sprites/'.$sprite_name.'.less', $sprites_file->generateLess());
+                }
+            }
+        }
+    }
+}
+
+class SpritesFile
+{
+
+    private $path;
+
+    private $name;
+    private $images = array();
+    private $size;
+
+    function __construct($path)
+    {
+        $this->path = $path;
+    }
+
+    function compile()
+    {
+        $this->name = basename($this->path);
         foreach (glob($this->path.'/*.png') as $file_path) {
             $image_name = basename($file_path);
             $this->images[$image_name] = new Sprites_ImageRect($image_name,
                 imagecreatefrompng($file_path));
         }
         $sprites_arranger = new Sprites_Arranger();
-        $size = $sprites_arranger->arrangeImages($this->images);
+        $this->size = $sprites_arranger->arrangeImages($this->images);
+    }
 
+    function drawImage()
+    {
+        $size = $this->size;
         $image = imagecreatetruecolor($size['width'], $size['height']);
         imagefill($image, 0, 0, imagecolortransparent($image));
         imagesavealpha($image, true);
@@ -24,15 +70,11 @@ class SpriteFile extends BaseFile
                 $rect->getWidth(), $rect->getHeight());
         }
 
-        ob_start();
-        imagepng($image);
-        $this->content = ob_get_clean();
+        return $image;
     }
 
     function generateLess()
     {
-        $url = $this->sm->getUrl($this->uri, $this->debug);
-        $globalName = basename($this->uri);
         $css = "/* This file was generated automatically. */\n\n";
         foreach ($this->images as $name => $image) {
             $name = str_replace('.png', '', $name);
@@ -41,15 +83,15 @@ class SpriteFile extends BaseFile
             $width = $image->getWidth();
             $height = $image->getHeight();
 
-            $css .= ".sprite_{$globalName}_$name() {\n";
-            $css .= "  background: url($url) -{$x}px -{$y}px;\n";
+            $css .= ".sprite_{$this->name}_$name() {\n";
+            $css .= "  background: url(../img/sprites/{$this->name}.png) -{$x}px -{$y}px;\n";
             $css .= "  width: {$width}px;\n";
             $css .= "  height: {$height}px;\n";
             $css .= "}\n\n";
         }
-
         return $css;
     }
+
 }
 
 
@@ -139,7 +181,7 @@ class Sprites_Arranger
             for ($j = $i; $j < $n; ++$j) {
                 $current = $rectsOrderedByHeight[$j];
                 if (!$current->hasBeenPositioned
-                    && ($curY + $current->getHeight()) <= $colH
+                        && ($curY + $current->getHeight()) <= $colH
                 ) {
                     $current->setPosition($curX, 0);
                     $colW = max($colW, $current->getWidth());
@@ -163,7 +205,7 @@ class Sprites_Arranger
     }
 
     private function arrangeColumn($rectsInColumn,
-                                   $remainingRectsOrderedByWidth)
+        $remainingRectsOrderedByWidth)
     {
         $first = $rectsInColumn[0];
 
@@ -178,8 +220,8 @@ class Sprites_Arranger
             for ($j = 0, $n = count($remainingRectsOrderedByWidth); $j < $n; ++$j) {
                 $current = $remainingRectsOrderedByWidth[$j];
                 if (!$current->hasBeenPositioned
-                    && ($curX + $current->getWidth()) <= $columnWidth
-                    && ($current->getHeight() <= $r->getHeight())
+                        && ($curX + $current->getWidth()) <= $columnWidth
+                        && ($current->getHeight() <= $r->getHeight())
                 ) {
                     $current->setPosition($r->x + $curX, $r->y);
                     $curX += $current->getWidth();

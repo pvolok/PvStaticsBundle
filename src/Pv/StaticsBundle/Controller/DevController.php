@@ -1,6 +1,6 @@
 <?php
 
-namespace Pv\Bundle\StaticsBundle\Controller;
+namespace Pv\StaticsBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;

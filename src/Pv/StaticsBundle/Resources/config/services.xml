@@ -6,9 +6,9 @@
 
     <parameters>
         <parameter key="statics.debug">%kernel.debug%</parameter>
-        <parameter key="pv_statics.manager.class">Pv\Bundle\StaticsBundle\StaticsManager</parameter>
-        <parameter key="pv_statics.cache.class">Pv\Bundle\StaticsBundle\Cache\FilesystemCache</parameter>
-        <parameter key="pv_statics.twig_extension.class">Pv\Bundle\StaticsBundle\Twig\StaticsExtension</parameter>
+        <parameter key="pv_statics.manager.class">Pv\StaticsBundle\StaticsManager</parameter>
+        <parameter key="pv_statics.cache.class">Pv\StaticsBundle\Cache\FilesystemCache</parameter>
+        <parameter key="pv_statics.twig_extension.class">Pv\StaticsBundle\Twig\StaticsExtension</parameter>
     </parameters>
 
     <services>
@@ -27,7 +27,7 @@
             <argument>%statics.debug%</argument>
         </service>
 
-        <service id="statics.helper" class="Pv\Bundle\StaticsBundle\StaticsHelper">
+        <service id="statics.helper" class="Pv\StaticsBundle\StaticsHelper">
             <argument type="service" id="service_container" />
             <argument>%statics.debug%</argument>
         </service>

@@ -1,6 +1,6 @@
 <?php
 
-namespace Pv\Bundle\StaticsBundle\Command;
+namespace Pv\StaticsBundle\Command;
 
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
@@ -15,7 +15,7 @@ class StaticsDumpCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        /** @var $statics_manager \Pv\Bundle\StaticsBundle\StaticsManager */
+        /** @var $statics_manager \Pv\StaticsBundle\StaticsManager */
         $statics_manager = $this->getContainer()->get('statics.manager');
         $s_dir = $this->getContainer()->getParameter('kernel.root_dir').'/../web/s';
 

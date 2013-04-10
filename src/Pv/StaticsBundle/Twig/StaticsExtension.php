@@ -1,6 +1,6 @@
 <?php
 
-namespace Pv\Bundle\StaticsBundle\Twig;
+namespace Pv\StaticsBundle\Twig;
 
 use Twig_Extension;
 use Twig_Function_Method;

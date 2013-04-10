@@ -5,8 +5,8 @@
     xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <parameters>
-        <parameter key="statics.controller.class">Pv\Bundle\StaticsBundle\Controller\StaticsController</parameter>
-        <parameter key="statics.routing_loader.class">Pv\Bundle\StaticsBundle\Routing\StaticsLoader</parameter>
+        <parameter key="statics.controller.class">Pv\StaticsBundle\Controller\StaticsController</parameter>
+        <parameter key="statics.routing_loader.class">Pv\StaticsBundle\Routing\StaticsLoader</parameter>
         <parameter key="assetic.cache.class">Assetic\Cache\FilesystemCache</parameter>
         <parameter key="assetic.use_controller_worker.class">Symfony\Bundle\AsseticBundle\Factory\Worker\UseControllerWorker</parameter>
         <parameter key="assetic.request_listener.class">Symfony\Bundle\AsseticBundle\EventListener\RequestListener</parameter>

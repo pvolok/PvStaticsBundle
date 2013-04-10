@@ -1,10 +1,10 @@
 <?php
 
-namespace Pv\Bundle\StaticsBundle\File;
+namespace Pv\StaticsBundle\File;
 
 use DateTime;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Pv\Bundle\StaticsBundle\StaticsManager;
+use Pv\StaticsBundle\StaticsManager;
 
 class BaseFile
 {

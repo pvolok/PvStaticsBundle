@@ -1,6 +1,6 @@
 <?php
 
-namespace Pv\Bundle\StaticsBundle\Cache;
+namespace Pv\StaticsBundle\Cache;
 
 class FilesystemCache
 {

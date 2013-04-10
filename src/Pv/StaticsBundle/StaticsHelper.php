@@ -1,6 +1,6 @@
 <?php
 
-namespace Pv\Bundle\StaticsBundle;
+namespace Pv\StaticsBundle;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
