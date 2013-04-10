@@ -34,60 +34,13 @@ class LessFile extends BaseFile
 
     protected function compileLess()
     {
-        $format = <<<'EOF'
-var less = require('less');
-var sys  = require(process.binding('natives').util ? 'util' : 'sys');
+        $less = new \lessc;
 
-new(less.Parser)(%s).parse(%s, function(e, tree) {
-    if (e) {
-        less.writeError(e);
-        process.exit(2);
-    }
-
-    try {
-        sys.print(tree.toCSS(%s));
-    } catch (e) {
-        less.writeError(e);
-        process.exit(3);
-    }
-});
-
-EOF;
-
-        // parser options
-        $parserOptions = array();
-        //$parserOptions['paths'] = $this->paths;$this->container->get()
-        $parserOptions['filename'] = basename($this->path);
-
-        // tree options
-        $treeOptions = array();
-        $treeOptions['compress'] = !$this->debug;
-
-        $pb = new ProcessBuilder();
-        $pb->inheritEnvironmentVariables();
-
-        // node.js configuration
-        $nodePaths = array('/usr/local/lib/node_modules');
-        if (0 < count($nodePaths)) {
-            $pb->setEnv('NODE_PATH', implode(':', $nodePaths));
+        if (!$this->debug) {
+            $less->setFormatter('compressed');
         }
 
-        $pb->add('node')->add($input = tempnam(sys_get_temp_dir(), 'statics_less'));
-        file_put_contents($input, sprintf($format,
-            json_encode($parserOptions),
-            json_encode($this->content),
-            json_encode($treeOptions)
-        ));
-
-        $proc = $pb->getProcess();
-        $code = $proc->run();
-        unlink($input);
-
-        if (0 < $code) {
-            throw new \Exception($proc->getErrorOutput());
-        }
-
-        $this->content = $proc->getOutput();
+        $this->content = $less->compile($this->getContent());
     }
 
     protected function dataUrlCallback($matches)
