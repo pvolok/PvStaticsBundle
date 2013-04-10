@@ -1,0 +1,33 @@
+parameters:
+    statics.debug:                   %kernel.debug%
+    pv_statics.manager.class:        Pv\StaticsBundle\StaticsManager
+    pv_statics.cache.class:          Pv\StaticsBundle\Cache\FilesystemCache
+    pv_statics.twig_extension.class: Pv\StaticsBundle\Twig\StaticsExtension
+
+services:
+    statics.manager:
+        class: %pv_statics.manager.class%
+        arguments:
+            - @service_container
+            - @statics.cache
+            - %kernel.root_dir%
+
+    statics.cache:
+        class: %pv_statics.cache.class%
+        arguments:
+            - %kernel.cache_dir%/statics
+
+    statics.helper:
+        class: Pv\StaticsBundle\StaticsHelper
+        arguments:
+            - @service_container
+            - %statics.debug%
+
+    statics.twig_extension:
+        class: %pv_statics.twig_extension.class%
+        arguments:
+            - @service_container
+            - %statics.debug%
+        public: false
+        tags:
+            - { name: twig.extension }
