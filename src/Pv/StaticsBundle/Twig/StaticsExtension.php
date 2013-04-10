@@ -27,8 +27,8 @@ class StaticsExtension extends Twig_Extension
     function getFunctions()
     {
         return array(
-            'js' => new Twig_Function_Method($this, "jsFunc", array('is_safe' => array('html'))),
-            'css' => new Twig_Function_Method($this, "cssFunc", array('is_safe' => array('html'))),
+            'statics_js' => new Twig_Function_Method($this, "jsFunc", array('is_safe' => array('html'))),
+            'statics_css' => new Twig_Function_Method($this, "cssFunc", array('is_safe' => array('html'))),
             'statics_path' => new Twig_Function_Method($this, "pathFunc", array('is_safe' => array('html')))
         );
     }
