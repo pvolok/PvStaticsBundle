@@ -36,3 +36,10 @@ services:
         class: Pv\StaticsBundle\Loader\Loader
         arguments:
             - @kernel
+
+    statics.filters.css_include:
+        class: Pv\StaticsBundle\Filter\CssIncludeFilter
+        arguments:
+            - @statics.manager
+    statics.filters.lessphp:
+        class: Pv\StaticsBundle\Filter\LessphpFilter
