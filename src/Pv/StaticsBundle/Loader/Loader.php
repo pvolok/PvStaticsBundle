@@ -4,6 +4,8 @@ namespace Pv\StaticsBundle\Loader;
 
 
 use Pv\StaticsBundle\Asset\FileAsset;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\HttpKernel\Bundle\BundleInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 
@@ -27,16 +29,30 @@ class Loader
         }
     }
 
+    public function findAll()
+    {
+        $dirs = $this->getDirs();
+
+        $finder = Finder::create()->files()->in($dirs)->notPath('/(?:^|\/)_/')
+            ->notPath('/^sprites\//');
+
+        $files = array();
+        foreach ($finder as $file) {
+            /** @var $file SplFileInfo */
+            $files[] = $file->getRelativePathname();
+        }
+        $files = array_unique($files);
+
+        return $files;
+    }
+
     protected function resolvePath($uri, $cwd)
     {
-        $dirs = array_map(function(BundleInterface $bundle) {
-            return $bundle->getPath().'/Resources/statics';
-        }, $this->kernel->getBundles());
+        $dirs = $this->getDirs();
 
         if ($cwd) {
-            $dirs[] = $cwd;
+            array_unshift($dirs, $cwd);
         }
-        $dirs = array_reverse($dirs);
 
         foreach ($dirs as $dir) {
             $path = "$dir/$uri";
@@ -46,6 +62,19 @@ class Loader
         }
 
         throw new \Exception("The file with uri ($uri) can not be found.");
+    }
+
+    protected function getDirs()
+    {
+        $dirs = array();
+        foreach ($this->kernel->getBundles() as $bundle) {
+            $dir = $bundle->getPath().'/Resources/statics';
+            if (is_dir($dir)) {
+                $dirs[] = $dir;
+            }
+        }
+
+        return array_reverse($dirs);
     }
 
     protected function fixUri($uri, $path)
