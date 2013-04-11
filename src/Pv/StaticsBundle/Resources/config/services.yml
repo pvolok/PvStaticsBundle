@@ -41,5 +41,9 @@ services:
         class: Pv\StaticsBundle\Filter\CssIncludeFilter
         arguments:
             - @statics.manager
+    statics.filters.js_include:
+        class: Pv\StaticsBundle\Filter\JsIncludeFilter
+        arguments:
+            - @statics.manager
     statics.filters.lessphp:
         class: Pv\StaticsBundle\Filter\LessphpFilter
