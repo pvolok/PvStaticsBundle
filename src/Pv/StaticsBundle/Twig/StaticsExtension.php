@@ -2,18 +2,16 @@
 
 namespace Pv\StaticsBundle\Twig;
 
-use Twig_Extension;
-use Twig_Function_Method;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-class StaticsExtension extends Twig_Extension
+class StaticsExtension extends \Twig_Extension
 {
-    private $conatiner;
+    private $container;
     private $debug;
 
     function __construct(ContainerInterface $container, $debug)
     {
-        $this->conatiner = $container;
+        $this->container = $container;
         $this->debug = $debug;
     }
 
@@ -25,9 +23,12 @@ class StaticsExtension extends Twig_Extension
     function getFunctions()
     {
         return array(
-            'statics_js' => new Twig_Function_Method($this, "jsFunc", array('is_safe' => array('html'))),
-            'statics_css' => new Twig_Function_Method($this, "cssFunc", array('is_safe' => array('html'))),
-            'statics_path' => new Twig_Function_Method($this, "pathFunc", array('is_safe' => array('html')))
+            new \Twig_SimpleFunction('statics_js', array($this, 'jsFunc'),
+                array('is_safe' => array('html'))),
+            new \Twig_SimpleFunction('statics_css', array($this, 'cssFunc'),
+                array('is_safe' => array('html'))),
+            new \Twig_SimpleFunction('statics_path', array($this, 'pathFunc'),
+                array('is_safe' => array('html'))),
         );
     }
 
@@ -45,6 +46,6 @@ class StaticsExtension extends Twig_Extension
 
     function pathFunc($path)
     {
-        return $this->conatiner->get('statics.url_helper')->addVars($path, true);
+        return $this->container->get('statics.url_helper')->getUrl($path, true);
     }
 }
