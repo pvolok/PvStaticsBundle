@@ -21,7 +21,8 @@ class Loader
         if (strpos($uri, 'sprites/')) {
         } else {
             $path = $this->resolvePath($uri, $cwd);
-            $asset = new FileAsset($path);
+            $uri = $this->fixUri($uri, $path);
+            $asset = new FileAsset($uri, $path);
             return $asset;
         }
     }
@@ -45,5 +46,11 @@ class Loader
         }
 
         throw new \Exception("The file with uri ($uri) can not be found.");
+    }
+
+    protected function fixUri($uri, $path)
+    {
+        preg_match('/\/Resources\/statics\/(.*)/', $path, $matches);
+        return $matches[1];
     }
 }
