@@ -11,8 +11,6 @@ class StaticsExtension extends Twig_Extension
     private $conatiner;
     private $debug;
 
-    private $namesMap;
-
     function __construct(ContainerInterface $container, $debug)
     {
         $this->conatiner = $container;
@@ -47,15 +45,6 @@ class StaticsExtension extends Twig_Extension
 
     function pathFunc($path)
     {
-        $locale = $this->conatiner->get('request')->getLocale();
-        $path = preg_replace('/\.js$/', ".$locale.js", $path);
-        if ($this->debug) {
-            return "/s/$path";
-        } else {
-            if (!$this->namesMap) {
-                $this->namesMap = include $this->conatiner->getParameter('kernel.root_dir').'/statics_map.php';
-            }
-            return (isset($this->namesMap[$path]) ? $this->namesMap[$path] : '/');
-        }
+        return $this->conatiner->get('statics.url_helper')->addVars($path, true);
     }
 }

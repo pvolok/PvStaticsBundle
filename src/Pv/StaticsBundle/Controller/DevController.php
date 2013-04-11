@@ -11,8 +11,8 @@ class DevController extends Controller
     {
         $this->getRequest()->setFormat('less', 'text/css');
 
-        $content = $this->get('statics.manager')
-            ->getFileContent($path, $this->getRequest()->getLocale(), true);
+        $asset = $this->get('statics.manager')->get($path);
+        $content = $asset->getContent();
         if ($content) {
             $ext = pathinfo($path, PATHINFO_EXTENSION);
             $this->getRequest()->setRequestFormat($ext);

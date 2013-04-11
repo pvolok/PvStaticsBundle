@@ -61,6 +61,33 @@ class StaticsManager
         }
     }
 
+    function load($uri, $cwd = null)
+    {
+        $asset = $this->container->get('statics.loader')->load($uri, $cwd);
+
+        $ext = pathinfo($asset->getUri(), PATHINFO_EXTENSION);
+        if (in_array($ext, array('css', 'less'))) {
+            $this->container->get('statics.filters.css_include')->filter($asset);
+        }
+        if ($ext == 'js') {
+            $this->container->get('statics.filters.js_include')->filter($asset);
+        }
+
+        return $asset;
+    }
+
+    function get($uri)
+    {
+        $asset = $this->load($uri);
+
+        $ext = pathinfo($uri, PATHINFO_EXTENSION);
+        if ($ext == 'less') {
+            $this->container->get('statics.filters.lessphp')->filter($asset);
+        }
+
+        return $asset;
+    }
+
     function getFileContent($uri, $debug=false)
     {
         $params = array(

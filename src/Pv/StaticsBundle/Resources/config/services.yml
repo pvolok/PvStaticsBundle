@@ -37,6 +37,11 @@ services:
         arguments:
             - @kernel
 
+    statics.url_helper:
+        class: Pv\StaticsBundle\UrlHelper
+        arguments:
+            - @service_container
+
     statics.filters.css_include:
         class: Pv\StaticsBundle\Filter\CssIncludeFilter
         arguments:
