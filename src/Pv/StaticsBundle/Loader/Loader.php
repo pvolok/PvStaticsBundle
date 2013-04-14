@@ -20,6 +20,10 @@ class Loader
 
     public function load($uri, $cwd = null)
     {
+        $params = parse_url($uri, PHP_URL_QUERY);
+        parse_str($params, $params);
+        $uri = parse_url($uri, PHP_URL_PATH);
+
         if (strpos($uri, 'sprites/')) {
         } else {
             $path = $this->resolvePath($uri, $cwd);
