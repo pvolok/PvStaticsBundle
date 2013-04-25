@@ -46,6 +46,7 @@ class StaticsExtension extends \Twig_Extension
 
     function pathFunc($path)
     {
-        return $this->container->get('statics.url_helper')->getUrl($path, true);
+        return $this->container->get('statics.url_helper')
+            ->getUrl($path, $this->container->getParameter('statics.debug'));
     }
 }

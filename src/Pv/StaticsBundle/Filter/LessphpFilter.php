@@ -11,6 +11,11 @@ class LessphpFilter
         $content = $asset->getContent();
 
         $less = new \lessc();
+
+        if (!$asset->getParam('debug')) {
+            $less->setFormatter('compressed');
+        }
+
         $content = $less->compile($content);
 
         $asset->setContent($content);

@@ -3,10 +3,10 @@
 namespace Pv\StaticsBundle\Loader;
 
 
+use Pv\StaticsBundle\Asset\BaseAsset;
 use Pv\StaticsBundle\Asset\FileAsset;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
-use Symfony\Component\HttpKernel\Bundle\BundleInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 
 class Loader
@@ -18,19 +18,31 @@ class Loader
         $this->kernel = $kernel;
     }
 
-    public function load($uri, $cwd = null)
+    public function load($uri, BaseAsset $parent = null)
     {
         $params = parse_url($uri, PHP_URL_QUERY);
         parse_str($params, $params);
         $uri = parse_url($uri, PHP_URL_PATH);
 
-        if (strpos($uri, 'sprites/')) {
+        $cwd = ($parent && $parent->getPath()) ? dirname($parent->getPath())
+            : null;
+
+        $asset = null;
+        if (strpos($uri, 'sprites/') === 0) {
         } else {
             $path = $this->resolvePath($uri, $cwd);
             $uri = $this->fixUri($uri, $path);
             $asset = new FileAsset($uri, $path);
-            return $asset;
         }
+
+        if ($asset) {
+            $asset->setParent($parent);
+            foreach ($params as $name => $value) {
+                $asset->setParam($name, $value);
+            }
+        }
+
+        return $asset;
     }
 
     public function findAll()

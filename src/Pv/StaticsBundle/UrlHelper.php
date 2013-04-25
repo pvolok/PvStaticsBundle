@@ -17,14 +17,18 @@ class UrlHelper
 
     function getUrl($url, $debug = false)
     {
-        $query = http_build_query($this->getValues($this->getVars($url)));
+        $query = $this->getValues($this->getVars($url));
+        if ($debug) {
+            $query['debug'] = true;
+        }
+        $query = http_build_query($query);
         $url = $url.'?'.$query;
 
         if ($debug) {
             return "/s/$url";
         } else {
             if (!$this->namesMap) {
-                $this->namesMap = include $this->conatiner->getParameter('kernel.root_dir').'/statics_map.php';
+                $this->namesMap = include $this->container->getParameter('kernel.root_dir').'/statics_map.php';
             }
             return (isset($this->namesMap[$url]) ? $this->namesMap[$url] : '/');
         }

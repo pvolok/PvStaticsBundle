@@ -17,11 +17,10 @@ abstract class IncludeFilter
     public function filter(FileAsset $asset)
     {
         $manager = $this->manager;
-        $cwd = dirname($asset->getPath());
         $content = $asset->getContent();
 
-        $cb = function($matches) use($manager, $cwd) {
-            $child = $manager->load($matches['url'], $cwd);
+        $cb = function($matches) use($manager, $asset) {
+            $child = $manager->load($matches['url'], $asset);
             return $child->getContent();
         };
         $content = preg_replace_callback($this->getRegex(), $cb, $content);
