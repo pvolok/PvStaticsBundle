@@ -38,7 +38,7 @@ class StaticsDumpCommand extends ContainerAwareCommand
             $asset = $staticsManager->get($uri);
             $content = $asset->getContent();
 
-            $publicUri = 's/'.md5($content).'.'.$this->getPublicExt($uri);
+            $publicUri = '/s/'.md5($content).'.'.$this->getPublicExt($uri);
             $namesMap[$uri] = $publicUri;
             file_put_contents($webDir.'/'.$publicUri, $content);
 
