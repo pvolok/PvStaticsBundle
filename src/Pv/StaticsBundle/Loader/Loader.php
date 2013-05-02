@@ -5,6 +5,8 @@ namespace Pv\StaticsBundle\Loader;
 
 use Pv\StaticsBundle\Asset\BaseAsset;
 use Pv\StaticsBundle\Asset\FileAsset;
+use Pv\StaticsBundle\Asset\StringAsset;
+use Pv\StaticsBundle\Asset\SpriteAsset;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\HttpKernel\KernelInterface;
@@ -24,11 +26,31 @@ class Loader
         parse_str($params, $params);
         $uri = parse_url($uri, PHP_URL_PATH);
 
+        $debug = isset($params['debug']) ? $params['debug']
+            : ($parent ? $parent->getParam('debug') : null);
+
         $cwd = ($parent && $parent->getPath()) ? dirname($parent->getPath())
             : null;
 
         $asset = null;
         if (strpos($uri, 'sprites/') === 0) {
+            $path = preg_replace('/\.\w+$/', '', $uri);
+            $path = $this->resolvePath($path, null);
+            $spriteFile = new SpriteAsset($uri, $path);
+
+            $ext = pathinfo($uri, PATHINFO_EXTENSION);
+            $asset = new StringAsset($uri);
+            if ($ext == 'png') {
+                $asset->setContent($spriteFile->getPng());
+            } elseif ($ext == 'less') {
+                if ($debug) {
+                    $imgUrl = '/s/'.preg_replace('/\.less$/', '.png', $uri).'?'.http_build_query($params);
+                } else {
+                    $imgUrl = '/s/'.md5($spriteFile->getPng()).'.png';
+                }
+                $asset->setContent($spriteFile->getLess($imgUrl));
+            }
+
         } else {
             $path = $this->resolvePath($uri, $cwd);
             $uri = $this->fixUri($uri, $path);
@@ -59,6 +81,13 @@ class Loader
         }
         $files = array_unique($files);
 
+        $finder = Finder::create()->directories()->in($dirs)
+            ->path('/^sprites\//')->depth(1);
+        foreach ($finder as $file) {
+            /** @var $file SplFileInfo */
+            $files[] = $file->getRelativePathname().'.png';
+        }
+
         return $files;
     }
 
@@ -72,7 +101,7 @@ class Loader
 
         foreach ($dirs as $dir) {
             $path = "$dir/$uri";
-            if (is_file($path)) {
+            if (file_exists($path)) {
                 return $path;
             }
         }

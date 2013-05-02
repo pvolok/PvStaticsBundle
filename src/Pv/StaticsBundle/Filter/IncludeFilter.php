@@ -2,7 +2,7 @@
 
 namespace Pv\StaticsBundle\Filter;
 
-use Pv\StaticsBundle\Asset\FileAsset;
+use Pv\StaticsBundle\Asset\BaseAsset;
 use Pv\StaticsBundle\StaticsManager;
 
 abstract class IncludeFilter
@@ -14,7 +14,7 @@ abstract class IncludeFilter
         $this->manager = $manager;
     }
 
-    public function filter(FileAsset $asset)
+    public function filter(BaseAsset $asset)
     {
         $manager = $this->manager;
         $content = $asset->getContent();
