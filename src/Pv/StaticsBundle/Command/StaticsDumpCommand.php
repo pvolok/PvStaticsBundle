@@ -2,6 +2,8 @@
 
 namespace Pv\StaticsBundle\Command;
 
+use Pv\StaticsBundle\StaticsManager;
+use Pv\StaticsBundle\UrlHelper;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -15,37 +17,43 @@ class StaticsDumpCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        /** @var $statics_manager \Pv\StaticsBundle\StaticsManager */
-        $statics_manager = $this->getContainer()->get('statics.manager');
-        $s_dir = $this->getContainer()->getParameter('kernel.root_dir').'/../web/s';
+        $container = $this->getContainer();
+        /** @var $staticsManager StaticsManager */
+        $staticsManager = $this->getContainer()->get('statics.manager');
+        /** @var $urlHelper UrlHelper */
+        $urlHelper = $container->get('statics.url_helper');
+        $sDir = $this->getContainer()->getParameter('kernel.root_dir').'/../web/s';
 
-        $files = $statics_manager->getPublicFiles();
-        $names_map = array();
-
-        exec("rm -fR $s_dir");
-        mkdir($s_dir, 0755, true);
-
-        $webDir = dirname($s_dir);
-        foreach ($files as $file) {
-            $content = $statics_manager->getFileContent($file);
-            $abs_path = $s_dir.'/'.$file;
-            $dir = dirname($abs_path);
-
-            $public_name = $statics_manager->getUrl($file, false);
-            $names_map[$file] = $public_name;
-            file_put_contents($webDir.'/'.$public_name, $content);
-
-            $output->writeln($file.' -> '.$public_name);
+        $uris = array();
+        foreach ($container->get('statics.loader')->findAll() as $uri) {
+            $uris = array_merge($uris, $urlHelper->getUrlVariants($uri));
         }
 
-        $names_map_file = $this->getContainer()->getParameter('kernel.root_dir').'/statics_map.php';
-        $names_map = "<?php\n\nreturn ".var_export($names_map, true).';';
-        file_put_contents($names_map_file, $names_map);
+        exec(sprintf('rm -fR %s', escapeshellarg($sDir)));
+        mkdir($sDir, 0755, true);
+
+        $namesMap = array();
+        $webDir = dirname($sDir);
+        foreach ($uris as $uri) {
+            $asset = $staticsManager->get($uri);
+            $content = $asset->getContent();
+
+            $publicUri = '/s/'.md5($content).'.'.$this->getPublicExt($uri);
+            $namesMap[$uri] = $publicUri;
+            file_put_contents($webDir.'/'.$publicUri, $content);
+
+            $output->writeln($uri.' -> '.$publicUri);
+        }
+
+        $namesMapFile = $this->getContainer()->getParameter('kernel.root_dir').'/statics_map.php';
+        $namesMap = "<?php\n\nreturn ".var_export($namesMap, true).';';
+        file_put_contents($namesMapFile, $namesMap);
     }
 
-    private function getPublicExt($path)
+    private function getPublicExt($uri)
     {
-        $ext = pathinfo($path, PATHINFO_EXTENSION);
+        preg_match('/[^?]*/', $uri, $matches);
+        $ext = pathinfo($matches[0], PATHINFO_EXTENSION);
         switch ($ext) {
             case 'less':
             case 'sass':

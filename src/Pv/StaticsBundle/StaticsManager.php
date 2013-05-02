@@ -2,6 +2,7 @@
 
 namespace Pv\StaticsBundle;
 
+use Pv\StaticsBundle\Asset\BaseAsset;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Pv\StaticsBundle\Cache\FilesystemCache;
 
@@ -61,9 +62,10 @@ class StaticsManager
         }
     }
 
-    function load($uri, $cwd = null)
+    function load($uri, $parent = null)
     {
-        $asset = $this->container->get('statics.loader')->load($uri, $cwd);
+        /** @var BaseAsset $asset */
+        $asset = $this->container->get('statics.loader')->load($uri, $parent);
 
         $ext = pathinfo($asset->getUri(), PATHINFO_EXTENSION);
         if (in_array($ext, array('css', 'less'))) {
@@ -80,7 +82,7 @@ class StaticsManager
     {
         $asset = $this->load($uri);
 
-        $ext = pathinfo($uri, PATHINFO_EXTENSION);
+        $ext = pathinfo($asset->getUri(), PATHINFO_EXTENSION);
         if ($ext == 'less') {
             $this->container->get('statics.filters.lessphp')->filter($asset);
         }
