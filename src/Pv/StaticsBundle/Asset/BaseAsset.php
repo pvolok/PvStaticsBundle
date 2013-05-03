@@ -10,8 +10,12 @@ class BaseAsset
     protected $content;
     protected $params;
 
-    /** @var FileAsset */
+    protected $srcFiles = array();
+
+    /** @var BaseAsset */
     protected $parent;
+    /** @var BaseAsset[] */
+    protected $children = array();
 
     public function __construct($uri)
     {
@@ -62,5 +66,26 @@ class BaseAsset
     public function setParent($asset)
     {
         $this->parent = $asset;
+    }
+
+    public function addChild($asset)
+    {
+        $this->children[] = $asset;
+    }
+
+    public function addSrcFile($file)
+    {
+        $this->srcFiles[] = $file;
+    }
+
+    public function getSrcFiles()
+    {
+        $ret = $this->srcFiles;
+
+        foreach ($this->children as $child) {
+            $ret = array_merge($ret, $child->getSrcFiles());
+        }
+
+        return $ret;
     }
 }

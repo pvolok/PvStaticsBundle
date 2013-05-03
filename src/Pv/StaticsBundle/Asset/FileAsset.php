@@ -10,5 +10,6 @@ class FileAsset extends BaseAsset
 
         $this->path = $path;
         $this->content = file_get_contents($path);
+        $this->addSrcFile($path);
     }
 }

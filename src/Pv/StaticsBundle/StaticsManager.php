@@ -3,6 +3,7 @@
 namespace Pv\StaticsBundle;
 
 use Pv\StaticsBundle\Asset\BaseAsset;
+use Pv\StaticsBundle\Asset\CachedAsset;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Pv\StaticsBundle\Cache\FilesystemCache;
 
@@ -80,12 +81,36 @@ class StaticsManager
 
     function get($uri)
     {
+        $cacheKey = md5($uri);
+        $cacheMeta = $this->cache->get($cacheKey.'.meta');
+        $cacheData = $this->cache->get($cacheKey.'.data');
+        if ($cacheMeta && $cacheData) {
+            $cacheMeta = json_decode($cacheMeta, true);
+            $changed = false;
+            foreach ($cacheMeta['files'] as $file) {
+                if ($cacheMeta['mtime'] < filemtime($file)) {
+                    $changed = true;
+                    break;
+                }
+            }
+            if (!$changed) {
+                return new CachedAsset($uri, $cacheData, $cacheMeta['files']);
+            }
+        }
+
         $asset = $this->load($uri);
 
         $ext = pathinfo($asset->getUri(), PATHINFO_EXTENSION);
         if ($ext == 'less') {
             $this->container->get('statics.filters.lessphp')->filter($asset);
         }
+
+        $meta = array(
+            'mtime' => time(),
+            'files' => $asset->getSrcFiles(),
+        );
+        $this->cache->set($cacheKey.'.meta', json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        $this->cache->set($cacheKey.'.data', $asset->getContent());
 
         return $asset;
     }

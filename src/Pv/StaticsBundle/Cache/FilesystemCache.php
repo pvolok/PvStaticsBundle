@@ -21,7 +21,7 @@ class FilesystemCache
         $path = $this->dir.'/'.$key;
 
         if (!file_exists($path)) {
-            throw new \RuntimeException('There is no cached value for '.$key);
+            return null;
         }
 
         return file_get_contents($path);

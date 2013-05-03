@@ -59,6 +59,9 @@ class Loader
 
         if ($asset) {
             $asset->setParent($parent);
+            if ($parent) {
+                $parent->addChild($asset);
+            }
             foreach ($params as $name => $value) {
                 $asset->setParam($name, $value);
             }
