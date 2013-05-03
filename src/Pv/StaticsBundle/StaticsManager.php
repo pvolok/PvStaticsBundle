@@ -104,8 +104,13 @@ class StaticsManager
         if ($ext == 'less') {
             $this->container->get('statics.filters.lessphp')->filter($asset);
         }
+        if ($ext == 'js') {
+            $this->container->get('statics.filters.closure_compiler')
+                ->filter($asset);
+        }
 
         $meta = array(
+            'uri' => $uri,
             'mtime' => time(),
             'files' => $asset->getSrcFiles(),
         );
