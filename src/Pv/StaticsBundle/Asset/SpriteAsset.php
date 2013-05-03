@@ -18,26 +18,26 @@ class SpriteAsset extends BaseAsset
         $this->load();
     }
 
-    function getPng()
+    static function getPng($data)
     {
-        return $this->img;
+        return base64_decode($data['img']);
     }
 
-    function getLess($url)
+    static function getLess($data, $url)
     {
-        $globalName = basename($this->path);
+        $globalName = basename($data['path']);
         $css = "/* This file was generated automatically. */\n\n";
-        foreach ($this->images as $name => $image) {
+        foreach ($data['map'] as $name => $rect) {
             $name = str_replace('.png', '', $name);
-            $x = $image->x;
-            $y = $image->y;
-            $width = $image->getWidth();
-            $height = $image->getHeight();
+            $x = $rect['x'];
+            $y = $rect['y'];
+            $width = $rect['w'];
+            $height = $rect['h'];
 
             $css .= ".sprite_{$globalName}_$name() {\n";
-            $css .= "  background: url($url) -{$x}px -{$y}px;\n";
-            $css .= "  width: {$width}px;\n";
-            $css .= "  height: {$height}px;\n";
+            $css .= "    background: url($url) -{$x}px -{$y}px;\n";
+            $css .= "    width: {$width}px;\n";
+            $css .= "    height: {$height}px;\n";
             $css .= "}\n\n";
         }
 
@@ -46,6 +46,8 @@ class SpriteAsset extends BaseAsset
 
     private function load()
     {
+        $this->addSrcFile($this->path);
+
         foreach (glob($this->path.'/*.png') as $file_path) {
             $image_name = basename($file_path);
             $this->images[$image_name] = new Sprites_ImageRect($image_name,
@@ -65,6 +67,21 @@ class SpriteAsset extends BaseAsset
         ob_start();
         imagepng($image);
         $this->img = ob_get_clean();
+
+        $content = array(
+            'path' => $this->path,
+            'img' => base64_encode($this->img),
+            'map' => $this->images,
+        );
+        $content['map'] = array_map(function(Sprites_ImageRect $rect) {
+            return array(
+                'x' => $rect->x,
+                'y' => $rect->y,
+                'w' => $rect->getWidth(),
+                'h' => $rect->getHeight(),
+            );
+        }, $content['map']);
+        $this->content = json_encode($content);
     }
 }
 

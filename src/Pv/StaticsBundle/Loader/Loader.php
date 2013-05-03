@@ -33,24 +33,29 @@ class Loader
             : null;
 
         $asset = null;
-        if (strpos($uri, 'sprites/') === 0) {
-            $path = preg_replace('/\.\w+$/', '', $uri);
-            $path = $this->resolvePath($path, null);
-            $spriteFile = new SpriteAsset($uri, $path);
+        if (preg_match('/^(sprites\/\w+)\.sprite$/', $uri, $matches)) {
+            $path = $this->resolvePath($matches[1], null);
+            $asset = new SpriteAsset($uri, $path);
+        } elseif (preg_match('/^(sprites\/\w+)\.(png|less)$/', $uri, $matches)) {
+            $spriteAsset = $this->kernel->getContainer()
+                ->get('statics.manager')->get($matches[1].'.sprite');
+            $spriteData = json_decode($spriteAsset->getContent(), true);
 
-            $ext = pathinfo($uri, PATHINFO_EXTENSION);
+            $ext = $matches[2];
             $asset = new StringAsset($uri);
+            foreach ($spriteAsset->getSrcFiles() as $srcFile) {
+                $asset->addSrcFile($srcFile);
+            }
             if ($ext == 'png') {
-                $asset->setContent($spriteFile->getPng());
+                $asset->setContent(SpriteAsset::getPng($spriteData));
             } elseif ($ext == 'less') {
                 if ($debug) {
                     $imgUrl = '/s/'.preg_replace('/\.less$/', '.png', $uri).'?'.http_build_query($params);
                 } else {
-                    $imgUrl = '/s/'.md5($spriteFile->getPng()).'.png';
+                    $imgUrl = '/s/'.md5(SpriteAsset::getPng($spriteData)).'.png';
                 }
-                $asset->setContent($spriteFile->getLess($imgUrl));
+                $asset->setContent(SpriteAsset::getLess($spriteData, $imgUrl));
             }
-
         } else {
             $path = $this->resolvePath($uri, $cwd);
             $uri = $this->fixUri($uri, $path);
