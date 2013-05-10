@@ -4,6 +4,7 @@ parameters:
     pv_statics.cache.class:          Pv\StaticsBundle\Cache\FilesystemCache
     pv_statics.twig_extension.class: Pv\StaticsBundle\Twig\StaticsExtension
     statics.closure_compiler.jar:    %kernel.root_dir%/../bin/closure-compiler-20130411.jar
+    statics.soy.jar:                 %kernel.root_dir%/../bin/soy-20121221.jar
 
 services:
     statics.manager:
@@ -47,13 +48,21 @@ services:
         class: Pv\StaticsBundle\Filter\CssIncludeFilter
         arguments:
             - @statics.manager
+
     statics.filters.js_include:
         class: Pv\StaticsBundle\Filter\JsIncludeFilter
         arguments:
             - @statics.manager
+
     statics.filters.lessphp:
         class: Pv\StaticsBundle\Filter\LessphpFilter
+
     statics.filters.closure_compiler:
         class: Pv\StaticsBundle\Filter\ClosureCompilerFilter
         arguments:
             - %statics.closure_compiler.jar%
+
+    statics.filters.soy:
+        class: Pv\StaticsBundle\Filter\SoyFilter
+        arguments:
+            - %statics.soy.jar%

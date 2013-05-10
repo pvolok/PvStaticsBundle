@@ -74,6 +74,8 @@ class StaticsManager
         }
         if ($ext == 'js') {
             $this->container->get('statics.filters.js_include')->filter($asset);
+        } elseif ($ext == 'soy') {
+            $this->container->get('statics.filters.soy')->filter($asset);
         }
 
         return $asset;
