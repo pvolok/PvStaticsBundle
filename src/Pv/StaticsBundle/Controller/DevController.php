@@ -10,6 +10,7 @@ class DevController extends Controller
     function renderAction($path)
     {
         $this->getRequest()->setFormat('less', 'text/css');
+        $this->getRequest()->setFormat('svg', 'image/svg+xml');
 
         $uri = $path.'?'.$this->getRequest()->getQueryString();
         $asset = $this->get('statics.manager')->get($uri);
