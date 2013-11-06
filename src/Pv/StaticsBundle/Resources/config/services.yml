@@ -56,6 +56,8 @@ services:
 
     statics.filters.lessphp:
         class: Pv\StaticsBundle\Filter\LessphpFilter
+        arguments:
+            - @statics.manager
 
     statics.filters.closure_compiler:
         class: Pv\StaticsBundle\Filter\ClosureCompilerFilter
