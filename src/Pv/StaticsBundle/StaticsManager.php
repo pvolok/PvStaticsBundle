@@ -90,7 +90,7 @@ class StaticsManager
             $cacheMeta = json_decode($cacheMeta, true);
             $changed = false;
             foreach ($cacheMeta['files'] as $file) {
-                if ($cacheMeta['mtime'] < filemtime($file)) {
+                if (!is_file($file) || $cacheMeta['mtime'] < filemtime($file)) {
                     $changed = true;
                     break;
                 }
