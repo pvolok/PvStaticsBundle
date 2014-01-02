@@ -2,7 +2,7 @@
     "name": "pv/statics-bundle",
     "require": {
         "symfony/symfony": "~2.1",
-        "symfony/process": "2.4~",
+        "symfony/process": "~2.4",
         "leafo/lessphp": "~0.4"
     },
     "autoload": {
