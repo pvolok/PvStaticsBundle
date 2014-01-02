@@ -104,7 +104,7 @@ class StaticsManager
 
         $ext = pathinfo($asset->getUri(), PATHINFO_EXTENSION);
         if ($ext == 'less') {
-            $this->container->get('statics.filters.lessphp')->filter($asset);
+            $this->container->get('statics.filters.less')->filter($asset);
         }
         if ($ext == 'js') {
             $this->container->get('statics.filters.closure_compiler')

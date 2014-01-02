@@ -3,21 +3,21 @@
 namespace Pv\StaticsBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class DevController extends Controller
 {
-    function renderAction($path)
+    function renderAction(Request $request, $path)
     {
-        $this->getRequest()->setFormat('less', 'text/css');
-        $this->getRequest()->setFormat('svg', 'image/svg+xml');
+        $request->setFormat('less', 'text/css');
+        $request->setFormat('svg', 'image/svg+xml');
 
-        $uri = $path.'?'.$this->getRequest()->getQueryString();
+        $uri = $path.'?'.$request->getQueryString();
         $asset = $this->get('statics.manager')->get($uri);
         $content = $asset->getContent();
         if ($content) {
-            $ext = pathinfo($path, PATHINFO_EXTENSION);
-            $this->getRequest()->setRequestFormat($ext);
+            $request->setRequestFormat(pathinfo($path, PATHINFO_EXTENSION));
             return new Response($content);
         }
         return new Response('File not found.');

@@ -59,6 +59,9 @@ services:
         arguments:
             - @statics.manager
 
+    statics.filters.less:
+        class: Pv\StaticsBundle\Filter\LessFilter
+
     statics.filters.closure_compiler:
         class: Pv\StaticsBundle\Filter\ClosureCompilerFilter
         arguments:
