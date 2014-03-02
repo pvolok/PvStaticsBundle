@@ -12,17 +12,23 @@ class LessFilter
     {
         $content = $asset->getContent();
 
+        $file = tmpfile();
+        fwrite($file, $content);
+        $filename = stream_get_meta_data($file)['uri'];
+
         $pb = ProcessBuilder::create()
-            ->add('lessc')
-            ->add('-');
+            ->add('/usr/local/bin/node')
+            ->add('/usr/local/bin/lessc')
+            ->add($filename);
 
         if (!$asset->getParam('debug')) {
             $pb->add('--compress');
         }
 
-        $proc = new Process($pb->getProcess()->getCommandLine()); // TODO: fix
-        $proc->setStdin($content);
+        $proc = $pb->getProcess();
         $proc->run();
+
+        fclose($file);
 
         if (!$proc->isSuccessful()) {
             throw new \Exception($proc->getErrorOutput());
