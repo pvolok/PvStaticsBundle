@@ -25,20 +25,40 @@ class SpriteAsset extends BaseAsset
 
     static function getLess($data, $url)
     {
+        $scale = substr($data['path'], -2) == 'X2' ? 2 : 1;
+        $backgroundSizeCss = '';
+        if ($scale > 1) {
+            $bgWidth = $data['width'] / $scale;
+            $bgHeight = $data['height'] / $scale;
+            $backgroundSizeCss = "background-size: {$bgWidth}px {$bgHeight}px;";
+        }
+
         $globalName = basename($data['path']);
         $css = "/* This file was generated automatically. */\n\n";
         foreach ($data['map'] as $name => $rect) {
             $name = str_replace('.png', '', $name);
-            $x = $rect['x'];
-            $y = $rect['y'];
-            $width = $rect['w'];
-            $height = $rect['h'];
+            $x = $rect['x'] / $scale;
+            $y = $rect['y'] / $scale;
+            $width = $rect['w'] / $scale;
+            $height = $rect['h'] / $scale;
 
-            $css .= ".sprite_{$globalName}_$name() {\n";
-            $css .= "    background: url($url) -{$x}px -{$y}px;\n";
-            $css .= "    width: {$width}px;\n";
-            $css .= "    height: {$height}px;\n";
-            $css .= "}\n\n";
+            $spriteName = "sprite-{$globalName}-$name";
+
+            $css .= <<<EOF
+// @deprecated
+.sprite_{$globalName}_$name() {
+  background: url($url) -{$x}px -{$y}px;\n
+  width: {$width}px;
+  height: {$height}px;
+}
+
+.$spriteName() {
+  background: url($url) -{$x}px -{$y}px;
+  width: {$width}px;
+  height: {$height}px;
+  $backgroundSizeCss
+}
+EOF;
         }
 
         return $css;
@@ -72,6 +92,8 @@ class SpriteAsset extends BaseAsset
             'path' => $this->path,
             'img' => base64_encode($this->img),
             'map' => $this->images,
+            'width' => imagesx($image),
+            'height' => imagesy($image),
         );
         $content['map'] = array_map(function(Sprites_ImageRect $rect) {
             return array(
