@@ -1,0 +1,7 @@
+services:
+    statics.dev_listener:
+        class: Pv\StaticsBundle\DevListener
+        arguments:
+            - @statics.manager
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: 255 }

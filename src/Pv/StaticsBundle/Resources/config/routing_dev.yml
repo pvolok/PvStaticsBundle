@@ -1,4 +1,1 @@
-_statics:
-    pattern: /s/{path}
-    defaults: { _controller: PvStaticsBundle:Dev:render }
-    requirements: { path: ".+" }
+# Deprecated

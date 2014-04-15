@@ -24,5 +24,9 @@ class PvStaticsExtension extends Extension
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
+        // TODO: add config options for this
+        if ($container->getParameter('kernel.debug')) {
+            $loader->load('dev.yml');
+        }
     }
 }
