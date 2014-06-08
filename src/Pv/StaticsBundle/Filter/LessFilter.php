@@ -17,7 +17,7 @@ class LessFilter
         $filename = stream_get_meta_data($file)['uri'];
 
         $pb = ProcessBuilder::create()
-            ->add('/usr/local/bin/node')
+            ->add('node')
             ->add('/usr/local/bin/lessc')
             ->add($filename);
 
