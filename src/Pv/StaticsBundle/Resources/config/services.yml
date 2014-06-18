@@ -3,8 +3,8 @@ parameters:
     pv_statics.manager.class:        Pv\StaticsBundle\StaticsManager
     pv_statics.cache.class:          Pv\StaticsBundle\Cache\FilesystemCache
     pv_statics.twig_extension.class: Pv\StaticsBundle\Twig\StaticsExtension
-    statics.closure_compiler.jar:    %kernel.root_dir%/../bin/closure-compiler-20130411.jar
-    statics.soy.jar:                 %kernel.root_dir%/../bin/soy-20121221.jar
+    statics.closure_compiler.jar:    %kernel.root_dir%/../bin/compiler.jar
+    statics.soy.jar:                 %kernel.root_dir%/../bin/SoyToJsSrcCompiler.jar
 
 services:
     statics.manager:
