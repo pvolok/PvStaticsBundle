@@ -29,12 +29,9 @@ class Loader
         $debug = isset($params['debug']) ? $params['debug']
             : ($parent ? $parent->getParam('debug') : null);
 
-        $cwd = ($parent && $parent->getPath()) ? dirname($parent->getPath())
-            : null;
-
         $asset = null;
         if (preg_match('/^(sprites\/\w+)\.sprite$/', $uri, $matches)) {
-            $path = $this->resolvePath($matches[1], null);
+            $path = $this->resolveUri($uri);
             $asset = new SpriteAsset($uri, $path);
         } elseif (preg_match('/^(sprites\/\w+)\.(png|less)$/', $uri, $matches)) {
             $spriteAsset = $this->kernel->getContainer()
@@ -57,7 +54,7 @@ class Loader
                 $asset->setContent(SpriteAsset::getLess($spriteData, $imgUrl));
             }
         } else {
-            $path = $this->resolvePath($uri, $cwd);
+            $path = $this->resolveUri($uri, $parent);
             $uri = $this->fixUri($uri, $path);
             $asset = new FileAsset($uri, $path);
         }
@@ -73,6 +70,29 @@ class Loader
         }
 
         return $asset;
+    }
+
+    public function resolveUri($uri, BaseAsset $parent = null)
+    {
+        $uri = preg_replace('/^(sprites\/\w+)\.\w+$/', '$1', $uri);
+
+        $cwd = ($parent && $parent->getPath()) ? dirname($parent->getPath())
+            : null;
+
+        $dirs = $this->getDirs();
+
+        if ($cwd) {
+            array_unshift($dirs, $cwd);
+        }
+
+        foreach ($dirs as $dir) {
+            $path = "$dir/$uri";
+            if (file_exists($path)) {
+                return realpath($path);
+            }
+        }
+
+        throw new \Exception("The file with uri ($uri) can not be found.");
     }
 
     public function findAll()
@@ -97,24 +117,6 @@ class Loader
         }
 
         return $files;
-    }
-
-    protected function resolvePath($uri, $cwd)
-    {
-        $dirs = $this->getDirs();
-
-        if ($cwd) {
-            array_unshift($dirs, $cwd);
-        }
-
-        foreach ($dirs as $dir) {
-            $path = "$dir/$uri";
-            if (file_exists($path)) {
-                return $path;
-            }
-        }
-
-        throw new \Exception("The file with uri ($uri) can not be found.");
     }
 
     protected function getDirs()

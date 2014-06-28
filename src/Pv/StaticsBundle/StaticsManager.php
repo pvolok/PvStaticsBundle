@@ -38,6 +38,11 @@ class StaticsManager
         }
     }
 
+    function resolveUri($uri, $parent)
+    {
+        return $this->container->get('statics.loader')->resolveUri($uri, $parent);
+    }
+
     function load($uri, $parent = null)
     {
         /** @var BaseAsset $asset */
