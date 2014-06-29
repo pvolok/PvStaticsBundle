@@ -168,13 +168,16 @@ class Sprites_Arranger
         return ($c != 0) ? $c : strcmp($b->getName(), $a->getName());
     }
 
+    /**
+     * @param Sprites_ImageRect[] $rects
+     */
     function arrangeImages($rects)
     {
         $rectsOrderedByHeight = $rects;
-        usort($rectsOrderedByHeight, __NAMESPACE__.'\Sprites_Arranger::descHeightComparator');
+        usort($rectsOrderedByHeight, self::class.'::descHeightComparator');
 
         $rectsOrderedByWidth = $rects;
-        usort($rectsOrderedByWidth, __NAMESPACE__.'\Sprites_Arranger::descWidthComparator');
+        usort($rectsOrderedByWidth, self::class.'::descWidthComparator');
 
         $first = $rectsOrderedByHeight[0];
         $first->setPosition(0, 0);
@@ -217,6 +220,10 @@ class Sprites_Arranger
         );
     }
 
+    /**
+     * @param Sprites_ImageRect[] $rectsInColumn
+     * @param Sprites_ImageRect[] $remainingRectsOrderedByWidth
+     */
     private function arrangeColumn($rectsInColumn,
                                    $remainingRectsOrderedByWidth)
     {
