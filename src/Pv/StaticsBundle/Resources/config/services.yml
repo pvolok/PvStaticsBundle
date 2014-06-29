@@ -12,7 +12,6 @@ services:
         arguments:
             - @service_container
             - @statics.cache
-            - %kernel.root_dir%
 
     statics.cache:
         class: %pv_statics.cache.class%
