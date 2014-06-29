@@ -4,11 +4,6 @@ namespace Pv\StaticsBundle\Asset;
 
 class SpriteAsset extends BaseAsset
 {
-    private $img;
-
-    /** @var Sprites_ImageRect[] */
-    private $images;
-
     function __construct($uri, $path)
     {
         parent::__construct($uri);
@@ -68,30 +63,33 @@ EOF;
     {
         $this->addSrcFile($this->path);
 
+        /** @var Sprites_ImageRect[] $images */
+        $images = [];
+
         foreach (glob($this->path.'/*.png') as $file_path) {
             $image_name = basename($file_path);
-            $this->images[$image_name] = new Sprites_ImageRect($image_name,
+            $images[$image_name] = new Sprites_ImageRect($image_name,
                 imagecreatefrompng($file_path));
         }
         $sprites_arranger = new Sprites_Arranger();
-        $size = $sprites_arranger->arrangeImages($this->images);
+        $size = $sprites_arranger->arrangeImages($images);
 
         $image = imagecreatetruecolor($size['width'], $size['height']);
         imagefill($image, 0, 0, imagecolortransparent($image));
         imagesavealpha($image, true);
-        foreach ($this->images as $rect) {
+        foreach ($images as $rect) {
             imagecopy($image, $rect->getImage(), $rect->x, $rect->y, 0, 0,
                 $rect->getWidth(), $rect->getHeight());
         }
 
         ob_start();
         imagepng($image);
-        $this->img = ob_get_clean();
+        $imgBlob = ob_get_clean();
 
         $content = array(
             'path' => $this->path,
-            'img' => base64_encode($this->img),
-            'map' => $this->images,
+            'img' => base64_encode($imgBlob),
+            'map' => $images,
             'width' => imagesx($image),
             'height' => imagesy($image),
         );
