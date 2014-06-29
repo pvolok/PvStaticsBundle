@@ -19,12 +19,6 @@ services:
         arguments:
             - %kernel.cache_dir%/statics
 
-    statics.helper:
-        class: Pv\StaticsBundle\StaticsHelper
-        arguments:
-            - @service_container
-            - %statics.debug%
-
     statics.twig_extension:
         class: %pv_statics.twig_extension.class%
         arguments:
