@@ -13,13 +13,15 @@ class SpriteAsset extends BaseAsset
         $this->load();
     }
 
-    static function getPng($data)
+    public function getPng()
     {
-        return base64_decode($data['img']);
+        return $this->content['img'];
     }
 
-    static function getLess($data, $url)
+    public function getLess($url)
     {
+        $data = $this->content;
+
         $scale = substr($data['path'], -2) == 'X2' ? 2 : 1;
         $backgroundSizeCss = '';
         if ($scale > 1) {
@@ -88,7 +90,7 @@ EOF;
 
         $content = array(
             'path' => $this->path,
-            'img' => base64_encode($imgBlob),
+            'img' => $imgBlob,
             'map' => $images,
             'width' => imagesx($image),
             'height' => imagesy($image),
@@ -101,7 +103,7 @@ EOF;
                 'h' => $rect->getHeight(),
             );
         }, $content['map']);
-        $this->content = json_encode($content);
+        $this->content = $content;
     }
 }
 
