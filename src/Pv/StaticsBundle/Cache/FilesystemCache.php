@@ -24,7 +24,7 @@ class FilesystemCache
             return null;
         }
 
-        return file_get_contents($path);
+        return unserialize(file_get_contents($path));
     }
 
     public function set($key, $value)
@@ -35,7 +35,7 @@ class FilesystemCache
 
         $path = $this->dir.'/'.$key;
 
-        if (false === @file_put_contents($path, $value)) {
+        if (false === @file_put_contents($path, serialize($value))) {
             throw new \RuntimeException('Unable to write file '.$path);
         }
     }
