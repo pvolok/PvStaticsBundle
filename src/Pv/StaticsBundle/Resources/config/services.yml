@@ -54,11 +54,6 @@ services:
         arguments:
             - @statics.manager
 
-    statics.filters.lessphp:
-        class: Pv\StaticsBundle\Filter\LessphpFilter
-        arguments:
-            - @statics.manager
-
     statics.filters.less:
         class: Pv\StaticsBundle\Filter\LessFilter
 
