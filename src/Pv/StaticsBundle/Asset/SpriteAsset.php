@@ -4,56 +4,71 @@ namespace Pv\StaticsBundle\Asset;
 
 class SpriteAsset extends BaseAsset
 {
+    protected $hasRetina = false;
+
     function __construct($uri, $path)
     {
         parent::__construct($uri);
 
         $this->path = $path;
+        $this->content = [];
 
         $this->load();
     }
 
-    public function getPng()
+    public function getScales()
     {
-        return $this->content['img'];
+        return $this->hasRetina ? [1, 2] : [1];
     }
 
-    public function getLess($url)
+    public function getPng($scale)
+    {
+        return $this->content[$scale]['img'];
+    }
+
+    public function getLess($urls)
     {
         $data = $this->content;
 
-        $scale = substr($data['path'], -2) == 'X2' ? 2 : 1;
-        $backgroundSizeCss = '';
-        if ($scale > 1) {
-            $bgWidth = $data['width'] / $scale;
-            $bgHeight = $data['height'] / $scale;
-            $backgroundSizeCss = "background-size: {$bgWidth}px {$bgHeight}px;";
-        }
-
-        $globalName = basename($data['path']);
+        $globalName = basename($data[1]['path']);
         $css = "/* This file was generated automatically. */\n\n";
-        foreach ($data['map'] as $name => $rect) {
+        foreach ($data[1]['map'] as $name => $rect) {
+            $retinaRules = '';
+            if ($this->hasRetina) {
+                $retinaX = $data[2]['map'][$name]['x'] / 2;
+                $retinaY = $data[2]['map'][$name]['y'] / 2;
+                $retinaBgWidth = $data[2]['width'] / 2;
+                $retinaBgHeight = $data[2]['height'] / 2;
+                $retinaRules = <<<EOF
+@media only screen and (-webkit-min-device-pixel-ratio: 1.5),
+       only screen and (min-resolution: 144dpi) {
+    background: url({$urls[2]}) -{$retinaX}px -{$retinaY}px;
+    background-size: {$retinaBgWidth}px {$retinaBgHeight}px;
+}
+EOF;
+            }
+
             $name = str_replace('.png', '', $name);
-            $x = $rect['x'] / $scale;
-            $y = $rect['y'] / $scale;
-            $width = $rect['w'] / $scale;
-            $height = $rect['h'] / $scale;
+            $x = $rect['x'];
+            $y = $rect['y'];
+            $width = $rect['w'];
+            $height = $rect['h'];
 
             $spriteName = "sprite-{$globalName}-$name";
 
             $css .= <<<EOF
 // @deprecated
 .sprite_{$globalName}_$name() {
-  background: url($url) -{$x}px -{$y}px;\n
+  background: url({$urls[1]}) -{$x}px -{$y}px;
   width: {$width}px;
   height: {$height}px;
 }
 
 .$spriteName() {
-  background: url($url) -{$x}px -{$y}px;
+  background: url({$urls[1]}) -{$x}px -{$y}px;
   width: {$width}px;
   height: {$height}px;
-  $backgroundSizeCss
+  $retinaRules
 }
 EOF;
         }
@@ -65,16 +80,52 @@ EOF;
     {
         $this->addSrcFile($this->path);
 
-        /** @var Sprites_ImageRect[] $images */
         $images = [];
 
-        foreach (glob($this->path.'/*.png') as $file_path) {
-            $image_name = basename($file_path);
-            $images[$image_name] = new Sprites_ImageRect($image_name,
-                imagecreatefrompng($file_path));
+        foreach (glob($this->path.'/*.png') as $filePath) {
+            preg_match('/(.*?)(@2x)?\.png$/', basename($filePath), $matches);
+            $imageName = $matches[1];
+            $scale = empty($matches[2]) ? 1 : 2;
+            $images[$imageName][$scale] = new Sprites_ImageRect($imageName,
+                imagecreatefrompng($filePath));
+
+            $this->hasRetina = $this->hasRetina || $scale == 2;
         }
-        $sprites_arranger = new Sprites_Arranger();
-        $size = $sprites_arranger->arrangeImages($images);
+
+        // Check that all scales are available.
+        if ($this->hasRetina) {
+            /** @var Sprites_ImageRect[] $image */
+            foreach ($images as $name => $image) {
+                $id = "{$this->path}::$name";
+                if (empty($image[1]) || empty($image[2])) {
+                    throw new \Exception("Either x1 or x2 image is not " .
+                        "provided for sprite $id");
+                }
+                if ($image[1]->getWidth() * 2 != $image[2]->getWidth() ||
+                    $image[1]->getHeight() * 2 != $image[2]->getHeight()) {
+
+                    throw new \Exception("Retina image's sides must be " .
+                        "exactly twice as big in sprite $id");
+                }
+                if ($image[2]->getWidth() % 2 || $image[2]->getHeight() % 2) {
+                    throw new \Exception("Both width and height of retina " .
+                        "image must be dividable by 2 in sprite $id");
+                }
+            }
+            $this->arrange($images, 2);
+        }
+
+        $this->arrange($images, 1);
+    }
+
+    private function arrange($images, $scale) {
+        /** @var Sprites_ImageRect[] $images */
+        $images = array_map(function($el) use ($scale) {
+            return $el[$scale];
+        }, $images);
+
+        $arranger = new Sprites_Arranger();
+        $size = $arranger->arrangeImages($images);
 
         $image = imagecreatetruecolor($size['width'], $size['height']);
         imagefill($image, 0, 0, imagecolortransparent($image));
@@ -103,7 +154,8 @@ EOF;
                 'h' => $rect->getHeight(),
             );
         }, $content['map']);
-        $this->content = $content;
+
+        $this->content[$scale] = $content;
     }
 }
 

@@ -7,6 +7,7 @@ use Pv\StaticsBundle\Asset\BaseAsset;
 use Pv\StaticsBundle\Asset\FileAsset;
 use Pv\StaticsBundle\Asset\StringAsset;
 use Pv\StaticsBundle\Asset\SpriteAsset;
+use Pv\StaticsBundle\StaticsManager;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\HttpKernel\KernelInterface;
@@ -14,10 +15,13 @@ use Symfony\Component\HttpKernel\KernelInterface;
 class Loader
 {
     protected $kernel;
+    protected $staticsManager;
 
-    public function __construct(KernelInterface $kernel)
+    public function __construct(KernelInterface $kernel,
+        StaticsManager $staticsManager)
     {
         $this->kernel = $kernel;
+        $this->staticsManager = $staticsManager;
     }
 
     public function load($uri, BaseAsset $parent = null)
@@ -33,25 +37,32 @@ class Loader
         if (preg_match('/^(sprites\/\w+)\.sprite$/', $uri, $matches)) {
             $path = $this->resolveUri($uri);
             $asset = new SpriteAsset($uri, $path);
-        } elseif (preg_match('/^(sprites\/\w+)\.(png|less)$/', $uri, $matches)) {
+        } elseif (preg_match('/^(sprites\/\w+)(@2x)?\.(png|less)$/', $uri, $matches)) {
+            $path = $matches[1];
             /** @var SpriteAsset $spriteAsset */
-            $spriteAsset = $this->kernel->getContainer()
-                ->get('statics.manager')->get($matches[1].'.sprite');
+            $spriteAsset = $this->staticsManager->get($path.'.sprite');
 
-            $ext = $matches[2];
+            $scale = $matches[2] ? 2 : 1;
+            $ext = $matches[3];
             $asset = new StringAsset($uri);
             foreach ($spriteAsset->getSrcFiles() as $srcFile) {
                 $asset->addSrcFile($srcFile);
             }
             if ($ext == 'png') {
-                $asset->setContent($spriteAsset->getPng());
+                $asset->setContent($spriteAsset->getPng($scale));
             } elseif ($ext == 'less') {
-                if ($debug) {
-                    $imgUrl = '/s/'.preg_replace('/\.less$/', '.png', $uri).'?'.http_build_query($params);
-                } else {
-                    $imgUrl = '/s/'.md5($spriteAsset->getPng()).'.png';
+                $imgUrls = [];
+                foreach ($spriteAsset->getScales() as $scale) {
+                    if ($debug) {
+                        $imgUrls[$scale] = '/s/'.$path.
+                            ($scale == 1 ? '' : "@{$scale}x").
+                            '.png?'.http_build_query($params);
+                    } else {
+                        $imgUrls[$scale] = '/s/'.
+                            md5($spriteAsset->getPng($scale)).'.png';
+                    }
                 }
-                $asset->setContent($spriteAsset->getLess($imgUrl));
+                $asset->setContent($spriteAsset->getLess($imgUrls));
             }
         } else {
             $path = $this->resolveUri($uri, $parent);
@@ -112,8 +123,13 @@ class Loader
         $finder = Finder::create()->directories()->in($dirs)
             ->path('/^sprites\//')->depth(1);
         foreach ($finder as $file) {
-            /** @var $file SplFileInfo */
-            $files[] = $file->getRelativePathname().'.png';
+            $path = $file->getRelativePathname();
+            /** @var SpriteAsset $spriteAsset */
+            $spriteAsset = $this->staticsManager->load("{$path}.sprite");
+            foreach ($spriteAsset->getScales() as $scale) {
+                $scaleSuffix = $scale == 1 ? '' : "@{$scale}x";
+                $files[] = "$path$scaleSuffix.png";
+            }
         }
 
         return $files;
