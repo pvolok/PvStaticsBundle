@@ -20,8 +20,9 @@ abstract class IncludeFilter
         $content = $asset->getContent();
 
         $cb = function($matches) use($manager, $asset) {
-            $child = $manager->load($matches['url'], $asset);
-            return $child->getContent();
+            $path = $manager->resolveUri($matches['url'], $asset);
+            return $asset->getTop()->hasSrcFile($path) ? '' :
+                $manager->load($matches['url'], $asset)->getContent();
         };
         $content = preg_replace_callback($this->getRegex(), $cb, $content);
 

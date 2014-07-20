@@ -17,11 +17,15 @@ class BaseAsset
     /** @var BaseAsset[] */
     protected $children = array();
 
+    protected $lastModified;
+
     public function __construct($uri)
     {
         $this->uri = $uri;
 
         $this->params = array();
+
+        $this->lastModified = time();
     }
 
     /**
@@ -68,6 +72,11 @@ class BaseAsset
         $this->parent = $asset;
     }
 
+    public function getTop()
+    {
+        return $this->parent ? $this->parent->getTop() : $this;
+    }
+
     public function addChild($asset)
     {
         $this->children[] = $asset;
@@ -76,6 +85,20 @@ class BaseAsset
     public function addSrcFile($file)
     {
         $this->srcFiles[] = $file;
+        $this->lastModified = max($this->lastModified, filemtime($file));
+    }
+
+    public function hasSrcFile($file)
+    {
+        if (in_array($file, $this->srcFiles)) {
+            return true;
+        }
+        foreach ($this->children as $child) {
+            if ($child->hasSrcFile($file)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function getSrcFiles()
@@ -87,5 +110,20 @@ class BaseAsset
         }
 
         return $ret;
+    }
+
+    public function hasChanged()
+    {
+        foreach ($this->srcFiles as $file) {
+            if (!file_exists($file) || filemtime($file) > $this->lastModified) {
+                return true;
+            }
+        }
+        foreach ($this->children as $child) {
+            if ($child->hasChanged()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

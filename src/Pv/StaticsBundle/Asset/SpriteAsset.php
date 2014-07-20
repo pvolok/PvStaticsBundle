@@ -4,11 +4,6 @@ namespace Pv\StaticsBundle\Asset;
 
 class SpriteAsset extends BaseAsset
 {
-    private $img;
-
-    /** @var Sprites_ImageRect[] */
-    private $images;
-
     function __construct($uri, $path)
     {
         parent::__construct($uri);
@@ -18,13 +13,15 @@ class SpriteAsset extends BaseAsset
         $this->load();
     }
 
-    static function getPng($data)
+    public function getPng()
     {
-        return base64_decode($data['img']);
+        return $this->content['img'];
     }
 
-    static function getLess($data, $url)
+    public function getLess($url)
     {
+        $data = $this->content;
+
         $scale = substr($data['path'], -2) == 'X2' ? 2 : 1;
         $backgroundSizeCss = '';
         if ($scale > 1) {
@@ -68,30 +65,33 @@ EOF;
     {
         $this->addSrcFile($this->path);
 
+        /** @var Sprites_ImageRect[] $images */
+        $images = [];
+
         foreach (glob($this->path.'/*.png') as $file_path) {
             $image_name = basename($file_path);
-            $this->images[$image_name] = new Sprites_ImageRect($image_name,
+            $images[$image_name] = new Sprites_ImageRect($image_name,
                 imagecreatefrompng($file_path));
         }
         $sprites_arranger = new Sprites_Arranger();
-        $size = $sprites_arranger->arrangeImages($this->images);
+        $size = $sprites_arranger->arrangeImages($images);
 
         $image = imagecreatetruecolor($size['width'], $size['height']);
         imagefill($image, 0, 0, imagecolortransparent($image));
         imagesavealpha($image, true);
-        foreach ($this->images as $rect) {
+        foreach ($images as $rect) {
             imagecopy($image, $rect->getImage(), $rect->x, $rect->y, 0, 0,
                 $rect->getWidth(), $rect->getHeight());
         }
 
         ob_start();
         imagepng($image);
-        $this->img = ob_get_clean();
+        $imgBlob = ob_get_clean();
 
         $content = array(
             'path' => $this->path,
-            'img' => base64_encode($this->img),
-            'map' => $this->images,
+            'img' => $imgBlob,
+            'map' => $images,
             'width' => imagesx($image),
             'height' => imagesy($image),
         );
@@ -103,7 +103,7 @@ EOF;
                 'h' => $rect->getHeight(),
             );
         }, $content['map']);
-        $this->content = json_encode($content);
+        $this->content = $content;
     }
 }
 
@@ -168,13 +168,16 @@ class Sprites_Arranger
         return ($c != 0) ? $c : strcmp($b->getName(), $a->getName());
     }
 
+    /**
+     * @param Sprites_ImageRect[] $rects
+     */
     function arrangeImages($rects)
     {
         $rectsOrderedByHeight = $rects;
-        usort($rectsOrderedByHeight, __NAMESPACE__.'\Sprites_Arranger::descHeightComparator');
+        usort($rectsOrderedByHeight, self::class.'::descHeightComparator');
 
         $rectsOrderedByWidth = $rects;
-        usort($rectsOrderedByWidth, __NAMESPACE__.'\Sprites_Arranger::descWidthComparator');
+        usort($rectsOrderedByWidth, self::class.'::descWidthComparator');
 
         $first = $rectsOrderedByHeight[0];
         $first->setPosition(0, 0);
@@ -217,6 +220,10 @@ class Sprites_Arranger
         );
     }
 
+    /**
+     * @param Sprites_ImageRect[] $rectsInColumn
+     * @param Sprites_ImageRect[] $remainingRectsOrderedByWidth
+     */
     private function arrangeColumn($rectsInColumn,
                                    $remainingRectsOrderedByWidth)
     {

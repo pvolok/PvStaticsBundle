@@ -12,18 +12,11 @@ services:
         arguments:
             - @service_container
             - @statics.cache
-            - %kernel.root_dir%
 
     statics.cache:
         class: %pv_statics.cache.class%
         arguments:
             - %kernel.cache_dir%/statics
-
-    statics.helper:
-        class: Pv\StaticsBundle\StaticsHelper
-        arguments:
-            - @service_container
-            - %statics.debug%
 
     statics.twig_extension:
         class: %pv_statics.twig_extension.class%
@@ -51,11 +44,6 @@ services:
 
     statics.filters.js_include:
         class: Pv\StaticsBundle\Filter\JsIncludeFilter
-        arguments:
-            - @statics.manager
-
-    statics.filters.lessphp:
-        class: Pv\StaticsBundle\Filter\LessphpFilter
         arguments:
             - @statics.manager
 
