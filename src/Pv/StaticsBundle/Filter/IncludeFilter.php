@@ -19,9 +19,19 @@ abstract class IncludeFilter
         $manager = $this->manager;
         $content = $asset->getContent();
 
+        if ($dependRegex = $this->getRequireRegex()) {
+            $dependCb = function ($matches) use ($manager, $asset) {
+                $depend = $manager->get($matches['url']);
+                $asset->addChild($depend);
+                return "// depend {$matches['url']}";
+            };
+            $content = preg_replace_callback($dependRegex, $dependCb, $content);
+        }
+
         $cb = function($matches) use($manager, $asset) {
             $path = $manager->resolveUri($matches['url'], $asset);
-            return $asset->getTop()->hasSrcFile($path) ? '' :
+            return $asset->getTop()->hasSrcFile($path) ?
+                "// already included {$matches['url']}" :
                 $manager->load($matches['url'], $asset)->getContent();
         };
         $content = preg_replace_callback($this->getRegex(), $cb, $content);
@@ -30,4 +40,9 @@ abstract class IncludeFilter
     }
 
     protected abstract function getRegex();
+
+    protected function getRequireRegex()
+    {
+        return null;
+    }
 }
