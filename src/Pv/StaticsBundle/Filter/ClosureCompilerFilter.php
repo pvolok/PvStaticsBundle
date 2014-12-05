@@ -29,9 +29,10 @@ class ClosureCompilerFilter
         $pb->add('--charset')->add('UTF-8');
         $pb->add('--compilation_level')->add('SIMPLE_OPTIMIZATIONS');
 
-        $tmp_file = tempnam('/tmp', 'statics');
-        file_put_contents($tmp_file, $asset->getContent());
-        $pb->add('--js')->add($tmp_file);
+        $tmp = tmpfile();
+        $tmpPath = stream_get_meta_data($tmp)['uri'];
+        file_put_contents($tmpPath, $asset->getContent());
+        $pb->add('--js')->add($tmpPath);
 
         $proc = $pb->getProcess();
         if ($proc->run() != 0) {
@@ -40,7 +41,5 @@ class ClosureCompilerFilter
         } else {
             $asset->setContent($proc->getOutput());
         }
-
-        unlink($tmp_file);
     }
 }
