@@ -70,6 +70,13 @@ EOF;
   height: {$height}px;
   $retinaRules
 }
+
+.sprite-$globalName(@name) when (@name = $name) {
+  background: url({$urls[1]}) -{$x}px -{$y}px;
+  width: {$width}px;
+  height: {$height}px;
+  $retinaRules
+}
 EOF;
         }
 
