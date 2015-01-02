@@ -2,9 +2,20 @@
 
 namespace Pv\StaticsBundle\Asset;
 
+use Pv\StaticsBundle\Asset\Sprite\Arranger;
+use Pv\StaticsBundle\Asset\Sprite\Config;
+use Pv\StaticsBundle\Asset\Sprite\ImageRect;
+
 class SpriteAsset extends BaseAsset
 {
+    /** @var Config */
+    protected $config;
     protected $hasRetina = false;
+
+    public static function isImage($ext)
+    {
+        return $ext == 'png' || $ext == 'jpeg';
+    }
 
     function __construct($uri, $path)
     {
@@ -13,6 +24,7 @@ class SpriteAsset extends BaseAsset
         $this->path = $path;
         $this->content = [];
 
+        $this->loadConfig();
         $this->load();
     }
 
@@ -21,9 +33,14 @@ class SpriteAsset extends BaseAsset
         return $this->hasRetina ? [1, 2] : [1];
     }
 
-    public function getPng($scale)
+    public function getImage($scale)
     {
         return $this->content[$scale]['img'];
+    }
+
+    public function getImageType($scale)
+    {
+        return $this->config->getType($scale);
     }
 
     public function getLess($urls)
@@ -83,6 +100,18 @@ EOF;
         return $css;
     }
 
+    private function loadConfig()
+    {
+        $configPath = $this->path . '/_sprite.json';
+        if (is_file($configPath)) {
+            $this->addSrcFile($configPath);
+            $opts = json_decode(file_get_contents($configPath), true);
+            $this->config = new Config($opts);
+        } else {
+            $this->config = new Config();
+        }
+    }
+
     private function load()
     {
         $this->addSrcFile($this->path);
@@ -93,7 +122,7 @@ EOF;
             preg_match('/(.*?)(@2x)?\.png$/', basename($filePath), $matches);
             $imageName = $matches[1];
             $scale = empty($matches[2]) ? 1 : 2;
-            $images[$imageName][$scale] = new Sprites_ImageRect($imageName,
+            $images[$imageName][$scale] = new ImageRect($imageName,
                 imagecreatefrompng($filePath));
 
             $this->hasRetina = $this->hasRetina || $scale == 2;
@@ -101,7 +130,7 @@ EOF;
 
         // Check that all scales are available.
         if ($this->hasRetina) {
-            /** @var Sprites_ImageRect[] $image */
+            /** @var ImageRect[] $image */
             foreach ($images as $name => $image) {
                 $id = "{$this->path}::$name";
                 if (empty($image[1]) || empty($image[2])) {
@@ -126,12 +155,12 @@ EOF;
     }
 
     private function arrange($images, $scale) {
-        /** @var Sprites_ImageRect[] $images */
+        /** @var ImageRect[] $images */
         $images = array_map(function($el) use ($scale) {
             return $el[$scale];
         }, $images);
 
-        $arranger = new Sprites_Arranger();
+        $arranger = new Arranger();
         $size = $arranger->arrangeImages($images);
 
         $image = imagecreatetruecolor($size['width'], $size['height']);
@@ -143,7 +172,11 @@ EOF;
         }
 
         ob_start();
-        imagepng($image);
+        if ($this->config->getType($scale) == 'jpeg') {
+            imagejpeg($image, null, $this->config->getQuality($scale));
+        } else {
+            imagepng($image);
+        }
         $imgBlob = ob_get_clean();
 
         $content = array(
@@ -153,7 +186,7 @@ EOF;
             'width' => imagesx($image),
             'height' => imagesy($image),
         );
-        $content['map'] = array_map(function(Sprites_ImageRect $rect) {
+        $content['map'] = array_map(function(ImageRect $rect) {
             return array(
                 'x' => $rect->x,
                 'y' => $rect->y,
@@ -164,151 +197,4 @@ EOF;
 
         $this->content[$scale] = $content;
     }
-}
-
-
-class Sprites_ImageRect
-{
-    private $name;
-    private $image;
-
-    public $x = 0;
-    public $y = 0;
-
-    public $hasBeenPositioned = false;
-
-    function __construct($name, $image)
-    {
-        $this->name = $name;
-        $this->image = $image;
-    }
-
-    function getName()
-    {
-        return $this->name;
-    }
-
-    function getImage()
-    {
-        return $this->image;
-    }
-
-    function getWidth()
-    {
-        return imagesx($this->image);
-    }
-
-    function getHeight()
-    {
-        return imagesy($this->image);
-    }
-
-    function setPosition($x, $y)
-    {
-        $this->hasBeenPositioned = true;
-        $this->x = $x;
-        $this->y = $y;
-    }
-}
-
-
-class Sprites_Arranger
-{
-
-    static function descHeightComparator(Sprites_ImageRect $a, Sprites_ImageRect $b)
-    {
-        $c = $b->getHeight() - $a->getHeight();
-        return ($c != 0) ? $c : strcmp($b->getName(), $a->getName());
-    }
-
-    static function descWidthComparator(Sprites_ImageRect $a, Sprites_ImageRect $b)
-    {
-        $c = $b->getWidth() - $a->getWidth();
-        return ($c != 0) ? $c : strcmp($b->getName(), $a->getName());
-    }
-
-    /**
-     * @param Sprites_ImageRect[] $rects
-     */
-    function arrangeImages($rects)
-    {
-        $rectsOrderedByHeight = $rects;
-        usort($rectsOrderedByHeight, self::class.'::descHeightComparator');
-
-        $rectsOrderedByWidth = $rects;
-        usort($rectsOrderedByWidth, self::class.'::descWidthComparator');
-
-        $first = $rectsOrderedByHeight[0];
-        $first->setPosition(0, 0);
-
-        $curX = $first->getWidth();
-        $colH = $first->getHeight();
-
-        for ($i = 1, $n = count($rectsOrderedByHeight); $i < $n; ++$i) {
-            if ($rectsOrderedByHeight[$i]->hasBeenPositioned) {
-                continue;
-            }
-
-            $colW = 0;
-            $curY = 0;
-
-            $rectsInColumn = array();
-            for ($j = $i; $j < $n; ++$j) {
-                $current = $rectsOrderedByHeight[$j];
-                if (!$current->hasBeenPositioned
-                    && ($curY + $current->getHeight()) <= $colH
-                ) {
-                    $current->setPosition($curX, 0);
-                    $colW = max($colW, $current->getWidth());
-                    $curY += $current->getHeight();
-
-                    $rectsInColumn[] = $current;
-                }
-            }
-
-            if (count($rectsInColumn)) {
-                $this->arrangeColumn($rectsInColumn, $rectsOrderedByWidth);
-            }
-
-            $curX += $colW;
-        }
-
-        return array(
-            'width' => $curX,
-            'height' => $colH
-        );
-    }
-
-    /**
-     * @param Sprites_ImageRect[] $rectsInColumn
-     * @param Sprites_ImageRect[] $remainingRectsOrderedByWidth
-     */
-    private function arrangeColumn($rectsInColumn,
-                                   $remainingRectsOrderedByWidth)
-    {
-        $first = $rectsInColumn[0];
-
-        $columnWidth = $first->getWidth();
-        $curY = $first->getHeight();
-
-        for ($i = 1, $m = count($rectsInColumn); $i < $m; ++$i) {
-            $r = $rectsInColumn[$i];
-            $r->setPosition($r->x, $curY);
-            $curX = $r->getWidth();
-
-            for ($j = 0, $n = count($remainingRectsOrderedByWidth); $j < $n; ++$j) {
-                $current = $remainingRectsOrderedByWidth[$j];
-                if (!$current->hasBeenPositioned
-                    && ($curX + $current->getWidth()) <= $columnWidth
-                    && ($current->getHeight() <= $r->getHeight())
-                ) {
-                    $current->setPosition($r->x + $curX, $r->y);
-                    $curX += $current->getWidth();
-                }
-            }
-
-            $curY += $r->getHeight();
-        }
-    }
-
 }

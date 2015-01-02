@@ -27,6 +27,7 @@ class DevListener
         $request->setFormat('less', 'text/css');
         $request->setFormat('png', 'image/png');
         $request->setFormat('jpg', 'image/jpeg');
+        $request->setFormat('jpeg', 'image/jpeg');
         $request->setFormat('gif', 'image/gif');
         $request->setFormat('svg', 'image/svg+xml');
 

@@ -37,7 +37,7 @@ class Loader
         if (preg_match('/^(sprites\/\w+)\.sprite$/', $uri, $matches)) {
             $path = $this->resolveUri($uri);
             $asset = new SpriteAsset($uri, $path);
-        } elseif (preg_match('/^(sprites\/\w+)(@2x)?\.(png|less)$/', $uri, $matches)) {
+        } elseif (preg_match('/^(sprites\/\w+)(@2x)?\.(\w+)$/', $uri, $matches)) {
             $path = $matches[1];
             /** @var SpriteAsset $spriteAsset */
             $spriteAsset = $this->staticsManager->get($path.'.sprite');
@@ -48,18 +48,20 @@ class Loader
             foreach ($spriteAsset->getSrcFiles() as $srcFile) {
                 $asset->addSrcFile($srcFile);
             }
-            if ($ext == 'png') {
-                $asset->setContent($spriteAsset->getPng($scale));
+            if (SpriteAsset::isImage($ext)) {
+                $asset->setContent($spriteAsset->getImage($scale));
             } elseif ($ext == 'less') {
                 $imgUrls = [];
                 foreach ($spriteAsset->getScales() as $scale) {
                     if ($debug) {
                         $imgUrls[$scale] = '/s/'.$path.
-                            ($scale == 1 ? '' : "@{$scale}x").
-                            '.png?'.http_build_query($params);
+                            ($scale == 1 ? '' : "@{$scale}x") . '.' .
+                            $spriteAsset->getImageType($scale) . '?' .
+                            http_build_query($params);
                     } else {
-                        $imgUrls[$scale] = '/s/'.
-                            md5($spriteAsset->getPng($scale)).'.png';
+                        $imgUrls[$scale] = '/s/' .
+                            md5($spriteAsset->getImage($scale)) . '.' .
+                            $spriteAsset->getImageType($scale);
                     }
                 }
                 $asset->setContent($spriteAsset->getLess($imgUrls));
@@ -139,7 +141,8 @@ class Loader
             $spriteAsset = $this->staticsManager->load("{$path}.sprite");
             foreach ($spriteAsset->getScales() as $scale) {
                 $scaleSuffix = $scale == 1 ? '' : "@{$scale}x";
-                $files[] = "$path$scaleSuffix.png";
+                $ext = $spriteAsset->getImageType($scale);
+                $files[] = "$path$scaleSuffix.$ext";
             }
         }
 
