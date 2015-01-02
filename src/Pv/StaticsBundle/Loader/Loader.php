@@ -85,6 +85,17 @@ class Loader
 
     public function resolveUri($uri, BaseAsset $parent = null)
     {
+        // First check bower components
+        if (preg_match('/^bower\/(.*?)$/', $uri, $matches)) {
+            $path = dirname($this->kernel->getRootDir()) . '/bower_components/'
+                . $matches[1];
+            if (!file_exists($path)) {
+                throw new \Exception(
+                    "Bower dependency cannot be found ($path).");
+            }
+            return $path;
+        }
+
         $uri = preg_replace('/^(sprites\/\w+)\.\w+$/', '$1', $uri);
 
         $cwd = ($parent && $parent->getPath()) ? dirname($parent->getPath())
@@ -150,6 +161,9 @@ class Loader
 
     protected function fixUri($uri, $path)
     {
+        if (preg_match('/^bower\//', $uri)) {
+            return $uri;
+        }
         preg_match('/\/Resources\/statics\/(.*)/', $path, $matches);
         return $matches[1];
     }
