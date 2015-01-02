@@ -60,3 +60,6 @@ services:
         class: Pv\StaticsBundle\Filter\SoyFilter
         arguments:
             - %statics.soy.jar%
+
+    statics.filters.uglifyjs:
+        class: Pv\StaticsBundle\Filter\UglifyFilter
