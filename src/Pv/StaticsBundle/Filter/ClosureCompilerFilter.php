@@ -29,10 +29,7 @@ class ClosureCompilerFilter
         $pb->add('--charset')->add('UTF-8');
         $pb->add('--compilation_level')->add('SIMPLE_OPTIMIZATIONS');
 
-        $tmp = tmpfile();
-        $tmpPath = stream_get_meta_data($tmp)['uri'];
-        file_put_contents($tmpPath, $asset->getContent());
-        $pb->add('--js')->add($tmpPath);
+        $pb->setInput($asset->getContent());
 
         $proc = $pb->getProcess();
         if ($proc->run() != 0) {
