@@ -57,8 +57,8 @@ class SpriteAsset extends BaseAsset
                 $retinaBgWidth = $data[2]['width'] / 2;
                 $retinaBgHeight = $data[2]['height'] / 2;
                 $retinaRules = <<<EOF
-@media only screen and (-webkit-min-device-pixel-ratio: 1.5),
-       only screen and (min-resolution: 144dpi) {
+@media only screen and (-webkit-min-device-pixel-ratio: 1.25),
+       only screen and (min-resolution: 120dpi) {
     background: url({$urls[2]}) -{$retinaX}px -{$retinaY}px;
     background-size: {$retinaBgWidth}px {$retinaBgHeight}px;
 }
@@ -170,6 +170,8 @@ EOF;
             imagecopy($image, $rect->getImage(), $rect->x, $rect->y, 0, 0,
                 $rect->getWidth(), $rect->getHeight());
         }
+
+        imageinterlace($image, 1);
 
         ob_start();
         if ($this->config->getType($scale) == 'jpeg') {
